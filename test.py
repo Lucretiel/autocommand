@@ -2,11 +2,12 @@ from automain import automain
 
 @automain(__name__, 'This is a test automain program')
 def main(
-      param1: (bool, 'This is param1'),
-      param2: (bool, 'This is param2'),
-      verbose: bool,
-      quiet: bool,
       hostname,
+      param1=False,
+      param2=False,
+      verbose=False,
+      quiet=False,
+      config: 'Config file to load from. Defaults to ~/.testrc' ='~/.testrc',
       port=4747,
       *files: "The list of files to read from"):
 
@@ -14,6 +15,8 @@ def main(
         print('Fuck you I talk as much as I want')
     if verbose:
         print('I am being verbose')
+
+    print('Loaded config from {}'.format(config))
     print('param1:', param1)
     print('param2:', param2)
 

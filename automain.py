@@ -1,6 +1,20 @@
 from inspect import signature
 from argparse import ArgumentParser
 from sys import exit, argv
+from functools import wraps
+
+def _apply(result_type):
+    '''
+    Decorator to convert the return value of a function to a different result
+    type
+    '''
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            return result_type(func(*args, **kwargs))
+        return wrapper
+    return decorator
+
 
 # TODO: find a way to separate options from trailing optional arguments. Maybe.
 
@@ -24,6 +38,7 @@ def _get_type_description(annotation):
         annotation)
 
 
+@_apply(dict)
 def _process_parameter(param):
     '''
     For a parameter, yield the parameter's type, default, nargs, help
@@ -61,13 +76,26 @@ def _is_option(arg_spec):
     return 'action' in arg_spec or 'default' in arg_spec
 
 
+@_apply(tuple)
 def _get_flags(name, is_option, used_char_args):
     if is_option:
         if name[0] not in used_char_args:
-            used_char_args.add(name[0])
             yield '-{}'.format(name[0])
+            used_char_args.add(name[0])
 
-        yield '--{}'.format(name)
+        elif name[0].upper() not in used_char_args:
+            yield '-{}'.format(name[0].upper())
+            used_char_args.add(name[0].upper())
+
+        elif name[0].lower() not in used_char_args:
+            yield '-{}'.format(name[0].lower())
+            used_char_args.add(name[0].lower())
+
+        elif len(name) == 1:
+            yield '--{}'.format(name)
+
+        if len(name) > 1:
+            yield '--{}'.format(name)
     else:
         yield name
 
@@ -78,7 +106,7 @@ def _add_argument(parser, param, used_char_args):
     elif param.kind is param.VAR_KEYWORD:
         raise SyntaxError("automain doesn't understand kwargs", param)
 
-    arg_spec = dict(_process_parameter(param))
+    arg_spec = _process_parameter(param)
 
     flags = _get_flags(
         param.name,
