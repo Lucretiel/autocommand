@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 
 # TODO: find a way to separate options from trailing optional arguments. Maybe.
 
-
 def _get_type_description(annotation):
     '''
     Given an annotation, return the type and/or description for the parameter
@@ -101,6 +100,8 @@ def automain(module, description=None, epilog=None):
             function_args = main_sig.bind_partial()
             function_args.arguments.update(vars(parser.parse_args(argv)))
             return main(*function_args.args, **function_args.kwargs)
+
+        main_wrapper.main = main
 
         if module == '__main__':
             from sys import exit, argv
