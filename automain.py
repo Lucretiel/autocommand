@@ -1,5 +1,6 @@
 from inspect import signature
 from argparse import ArgumentParser
+from sys import exit, argv
 
 # TODO: find a way to separate options from trailing optional arguments. Maybe.
 
@@ -62,10 +63,11 @@ def _is_option(arg_spec):
 
 def _get_flags(name, is_option, used_char_args):
     if is_option:
-        yield '--{}'.format(name)
         if name[0] not in used_char_args:
             used_char_args.add(name[0])
             yield '-{}'.format(name[0])
+
+        yield '--{}'.format(name)
     else:
         yield name
 
@@ -104,7 +106,6 @@ def automain(module, description=None, epilog=None):
         main_wrapper.main = main
 
         if module == '__main__':
-            from sys import exit, argv
             exit(main_wrapper(argv[1:]))
 
         return main_wrapper
