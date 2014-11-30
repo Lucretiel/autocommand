@@ -1,36 +1,11 @@
 from sys import exit, argv as sys_argv
 from inspect import signature, Parameter
 from argparse import ArgumentParser
-from functools import wraps
 from contextlib import contextmanager, ExitStack
 from io import IOBase
 
 
 _empty = Parameter.empty
-
-
-@contextmanager
-def smart_open(filename_or_file, *args, **kwargs):
-    '''
-    This context manager allows you to correctly open a filename, if you want
-    to default some already-existing file object, like sys.stdout, which
-    shouldn't be closed at the end of the context. If the filename argument is
-    a str, bytes, or int, the file object is created via a call to open with
-    the given *args and **kwargs, sent to the context, and closed at the end of
-    the context, just like "with open(filename) as f". If it isn't one of the
-    openable types, the object simply sent to the context unchanged. Example:
-
-        def work_with_file(name=sys.stdout):
-            with smart_open(name) as f:
-                # Works correctly if name is a str filename or sys.stdout
-                print("Some stuff", file=f)
-                # If it was a filename, f is closed at the end here.
-    '''
-    if isinstance(filename_or_file, (str, bytes, int)):
-        with open(filename_or_file, *args, **kwargs) as f:
-            yield f
-    else:
-        yield filename_or_file
 
 
 class _Autofile:
@@ -125,17 +100,23 @@ def _add_argument(param, used_char_args):
 
             # Make it an option even if there's no explicit default
             is_option = True
+            # TODO: Update bool to support --no-option, as a counter to --option
 
         # Special case for file object types: make it a string type, for filename
         elif issubclass(arg_type, IOBase):
             arg_spec['type'] = str
+
+        # TODO: special case for list type.
+        #   - How to specificy type of list members?
+        #   - action='append' vs nargs='*'
 
         # Everything else: make it a plain type
         else:
             arg_spec['type'] = arg_type
 
     # nargs: if the signature includes *args, collect them as trailing CLI
-    # arguments in a list.
+    # arguments in a list. *args can't have a default value, so it can never be
+    # an option.
     if param.kind is param.VAR_POSITIONAL:
         # TODO: consider depluralizing metavar/name here.
         arg_spec['nargs'] = '*'
@@ -173,11 +154,6 @@ def _add_argument(param, used_char_args):
     else:
         flags.append(name)
 
-    # TODO: special case for list type.
-    #   - How to specificy type of list members?
-    #   - action='append' vs nargs='*'
-    # TODO: Update bool case to suppose --no-option, as a counter to --option
-
     return flags, arg_spec
 
 
@@ -190,8 +166,8 @@ def automain(module, description=None, epilog=None):
     single argv parameter, as from sys.argv, though you can supply your own.
     When called, the function parses the arguments provided, then supplies them
     to the decorated function. Keep in mind that this happens with plain
-    argparse, so supplying invalid arguments or '-h' will cause SystemExit to
-    be raised.
+    argparse, so supplying invalid arguments or '-h' will cause a usage
+    statement to be printed and a SystemExit to be raised
 
     If `module` == "__main__", the decorated function is called immediately
     with sys.argv, and the progam is exited with the return value; this is so
@@ -213,6 +189,8 @@ def automain(module, description=None, epilog=None):
             flags, spec = _add_argument(param, used_char_args)
             parser.add_argument(*flags, **spec)
 
+        # No functools.wraps, because the signature and functionality is so
+        # different
         def main_wrapper(argv):
             # Update parser with program name
             parser.prog = argv[0]
@@ -249,4 +227,26 @@ def automain(module, description=None, epilog=None):
     return decorator
 
 
+@contextmanager
+def smart_open(filename_or_file, *args, **kwargs):
+    '''
+    This context manager allows you to correctly open a filename, if you want
+    to default some already-existing file object, like sys.stdout, which
+    shouldn't be closed at the end of the context. If the filename argument is
+    a str, bytes, or int, the file object is created via a call to open with
+    the given *args and **kwargs, sent to the context, and closed at the end of
+    the context, just like "with open(filename) as f". If it isn't one of the
+    openable types, the object simply sent to the context unchanged. Example:
+
+        def work_with_file(name=sys.stdout):
+            with smart_open(name) as f:
+                # Works correctly if name is a str filename or sys.stdout
+                print("Some stuff", file=f)
+                # If it was a filename, f is closed at the end here.
+    '''
+    if isinstance(filename_or_file, (str, bytes, int)):
+        with open(filename_or_file, *args, **kwargs) as f:
+            yield f
+    else:
+        yield filename_or_file
 
