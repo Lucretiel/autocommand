@@ -1,4 +1,3 @@
-from sys import exit, argv as sys_argv
 from inspect import signature, Parameter
 from argparse import ArgumentParser
 from contextlib import contextmanager, ExitStack
@@ -218,7 +217,8 @@ def automain(module, description=None, epilog=None):
 
         # If we are running as a script/program, call main right away, then exit
         if module == '__main__':
-            exit(main_wrapper(sys_argv))
+            from sys import exit as sys_exit, argv as sys_argv
+            sys_exit(main_wrapper(sys_argv))
 
         # Otherwise, attach the wrapped main function, and return the wrapper.
         main_wrapper.main = main
