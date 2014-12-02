@@ -31,22 +31,38 @@ class _Autofile:
     arguments to open(). See the `autofile` function for a system to create
     _Autofile subclasses with pre-defined args and kwargs for open(), which can
     be instantiated with a filename.
-    '''
-    def __init__(self, open_args, open_kwargs, handler):
-        @contextmanager
-        def _open():
-            try:
-                f = open(*open_args, **open_kwargs)
-            except OSError as e:
-                if handler is not None:
-                    yield handler(e)
-                else:
-                    raise
-            else:
-                with f:
-                    yield f
 
-        self.open = _open
+    This is a class, and not a function, to make it easy to detect as a main
+    function annotation.
+    '''
+    def __init__(self, handler, *open_args, **open_kwargs):
+        '''
+        Initialize the Autofile.
+        `open_args`: the arguments to the open(...) call
+        `open_kwargs`: the kwargs to the open(...) call
+        `handler`: An optional error handler. If an exception is raised opening
+            the file, it is passed to this function, and the return value sent
+            to the context instead of a file object.
+        '''
+        self.handler = handler
+        self.args = open_args
+        self.kwargs = open_kwargs
+
+    @contextmanager
+    def open(self):
+        try:
+            # Can't just yield open(...) because an exception could be raised
+            # from the context.
+            f = open(*self.args, **self.kwargs)
+        except OSError as e:
+            # Can't just call and catch TypeError, because handler may raise.
+            if callable(self.handler):
+                yield self.handler(e)
+            else:
+                raise
+        else:
+            with f:
+                yield f
 
 
 def autofile(*args, handler=None, **kwargs):
@@ -64,14 +80,22 @@ def autofile(*args, handler=None, **kwargs):
 
     Of course, because the objects passed to main as arguments are normal file
     objects, you can use your own "with" context to close the file earlier, as
-    consecutive close() calls are safe no-ops. Keep in mind, though, that the
-    standard streams probably shouldn't be closed; consider using a str type
-    and smart_open instead of autofile if you want to support manually closing
-    files in this case.
+    consecutive close() calls are safe no-ops. Just be careful not to close
+    a standard stream if you provide it as a default argument.
+
+    Example:
+
+        @automain(__name__):
+        def main(
+            input_file: ("The file to read from", autofile('r')) =stdin,
+            output_file: ("The file to write to", autofile('w')) =stdout):
+
+            ...
+
     '''
     class ScopedAutofile(_Autofile):
         def __init__(self, filename):
-            super().__init__(filename, args, kwargs, handler)
+            super().__init__(handler, filename, *args, **kwargs)
     return ScopedAutofile
 
 
