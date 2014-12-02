@@ -174,7 +174,7 @@ def _add_argument(param, used_char_args):
     return flags, arg_spec
 
 
-def automain(module, description=None, epilog=None):
+def automain(module=None, description=None, epilog=None):
     '''
     Decorator to create an automain function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
@@ -184,12 +184,13 @@ def automain(module, description=None, epilog=None):
     When called, the function parses the arguments provided, then supplies them
     to the decorated function. Keep in mind that this happens with plain
     argparse, so supplying invalid arguments or '-h' will cause a usage
-    statement to be printed and a SystemExit to be raised
+    statement to be printed and a SystemExit to be raised.
 
-    If `module` == "__main__", the decorated function is called immediately
-    with sys.argv, and the progam is exited with the return value; this is so
-    that you can call @automain(__name__) and still be able to import the
-    module for testing.
+    Optionally, pass a module name (typically __name__) as the first argument
+    to `automain`. If you do, and it is "__main__", the decorated function is
+    called immediately with sys.argv, and the progam is exited with the return
+    value; this is so that you can call @automain(__name__) and still be able
+    to import the module for testing.
 
     The decorated function is attached to the result as the `main` attribute.
     '''
