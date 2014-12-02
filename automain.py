@@ -32,20 +32,35 @@ class _Autofile:
     _Autofile subclasses with pre-defined args and kwargs for open(), which can
     be instantiated with a filename.
     '''
-    def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
+    def __init__(self, open_args, open_kwargs, handler):
+        @contextmanager
+        def _open():
+            try:
+                f = open(*open_args, **open_kwargs)
+            except OSError as e:
+                if handler is not None:
+                    yield handler(e)
+                else:
+                    raise
+            else:
+                with f:
+                    yield f
 
-    def open(self):
-        return open(*self.args, **self.kwargs)
+        self.open = _open
 
 
-def autofile(*args, **kwargs):
+def autofile(*args, handler=None, **kwargs):
     '''
     Create an autofile type. When used by automain, autofiles are automatically
     opened before main is called. The opened file objects are passed as
     arguments, and automatically closed when main returns, even if it throws an
     exception.
+
+    The optional handler argument allows you define an error-handler function.
+    If given, and an exception is raised trying to open the file, the function
+    is called with the exception, and the return value is passed to the main
+    function, instead of a file object. If no handler is given, the exception
+    is simply raised back to the main caller.
 
     Of course, because the objects passed to main as arguments are normal file
     objects, you can use your own "with" context to close the file earlier, as
@@ -56,7 +71,7 @@ def autofile(*args, **kwargs):
     '''
     class ScopedAutofile(_Autofile):
         def __init__(self, filename):
-            super().__init__(filename, *args, **kwargs)
+            super().__init__(filename, args, kwargs, handler)
     return ScopedAutofile
 
 
