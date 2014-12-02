@@ -233,6 +233,7 @@ def automain(module=None, description=None, epilog=None):
 
     The decorated function is attached to the result as the `main` attribute.
     '''
+    # TODO: document parameter-to-argparse logic
     def decorator(main):
         parser = ArgumentParser(description=description, epilog=epilog)
         main_sig = signature(main)
@@ -247,7 +248,7 @@ def automain(module=None, description=None, epilog=None):
             parser.add_argument(*flags, **spec)
 
         # No functools.wraps, because the signature and functionality is so
-        # different
+        # different.
         def main_wrapper(argv):
             # Update parser with program name
             parser.prog = argv[0]
@@ -255,17 +256,17 @@ def automain(module=None, description=None, epilog=None):
             # Parse arguments
             args = vars(parser.parse_args(argv[1:]))
 
-            # Get empty argument binding
+            # Get empty argument binding, to fill with parsed arguments. This
+            # object does all the heavy lifting of turning named arguments into
+            # into correctly bound *args and **kwargs.
             function_args = main_sig.bind_partial()
 
-            # Context for autofiles
             with ExitStack() as stack:
-                # Open autofiles
+                # Open autofiles- replace _Autofile instanes with associated
+                # file objects.
                 for arg_name, arg_value in args.items():
                     if isinstance(arg_value, _Autofile):
                         args[arg_name] = stack.enter_context(arg_value.open())
-
-                # TODO: do something smarter if the file can't be opened
 
                 # Apply command line arguments to function arguments
                 function_args.arguments.update(args)
@@ -273,10 +274,10 @@ def automain(module=None, description=None, epilog=None):
                 # Call main function
                 return main(*function_args.args, **function_args.kwargs)
 
-        # If we are running as a script/program, call main right away, then exit
+        # If we are running as a script/program, call main right away and exit.
         if module == '__main__':
-            from sys import exit as sys_exit, argv as sys_argv
-            sys_exit(main_wrapper(sys_argv))
+            from sys import exit, argv
+            exit(main_wrapper(argv))
 
         # Otherwise, attach the wrapped main function, and return the wrapper.
         main_wrapper.main = main
