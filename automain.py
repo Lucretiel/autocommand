@@ -218,12 +218,12 @@ def automain(module=None, description=None, epilog=None):
     Decorator to create an automain function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
     `epilog` parameters, to parse command line arguments corrosponding to the
-    function's parameters. The function's signature is changed to accept a
-    single argv parameter, as from sys.argv, though you can supply your own.
-    When called, the function parses the arguments provided, then supplies them
-    to the decorated function. Keep in mind that this happens with plain
-    argparse, so supplying invalid arguments or '-h' will cause a usage
-    statement to be printed and a SystemExit to be raised.
+    function's parameters. The function's signature is changed to accept *argv
+    parameters, as from sys.argv, though you can supply your own. When called,
+    the function parses the arguments provided, then supplies them to the
+    decorated function. Keep in mind that this happens with plain argparse, so
+    supplying invalid arguments or '-h' will cause a usage statement to be
+    printed and a SystemExit to be raised.
 
     Optionally, pass a module name (typically __name__) as the first argument
     to `automain`. If you do, and it is "__main__", the decorated function is
@@ -249,7 +249,7 @@ def automain(module=None, description=None, epilog=None):
 
         # No functools.wraps, because the signature and functionality is so
         # different.
-        def main_wrapper(argv):
+        def main_wrapper(*argv):
             # Update parser with program name
             parser.prog = argv[0]
 
@@ -277,7 +277,7 @@ def automain(module=None, description=None, epilog=None):
         # If we are running as a script/program, call main right away and exit.
         if module == '__main__':
             from sys import exit, argv
-            exit(main_wrapper(argv))
+            exit(main_wrapper(*argv))
 
         # Otherwise, attach the wrapped main function, and return the wrapper.
         main_wrapper.main = main
@@ -308,4 +308,3 @@ def smart_open(filename_or_file, *args, **kwargs):
             yield f
     else:
         yield filename_or_file
-
