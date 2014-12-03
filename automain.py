@@ -235,7 +235,9 @@ def automain(module=None, description=None, epilog=None):
     '''
     # TODO: document parameter-to-argparse logic
     def decorator(main):
-        parser = ArgumentParser(description=description, epilog=epilog)
+        parser = ArgumentParser(
+            description=description or main.__doc__,
+            epilog=epilog)
         main_sig = signature(main)
 
         used_char_args = {'h'}
