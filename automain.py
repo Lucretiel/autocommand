@@ -25,80 +25,6 @@ from io import IOBase
 _empty = Parameter.empty
 
 
-class _Autofile:
-    '''
-    Base class for the autofile feature. Should be instantiated with the future
-    arguments to open(). See the `autofile` function for a system to create
-    _Autofile subclasses with pre-defined args and kwargs for open(), which can
-    be instantiated with a filename.
-
-    This is a class, and not a function, to make it easy to detect as a main
-    function annotation.
-    '''
-    def __init__(self, handler, *open_args, **open_kwargs):
-        '''
-        Initialize the Autofile.
-        `open_args`: the arguments to the open(...) call
-        `open_kwargs`: the kwargs to the open(...) call
-        `handler`: An optional error handler. If an exception is raised opening
-            the file, it is passed to this function, and the return value sent
-            to the context instead of a file object.
-        '''
-        self.handler = handler
-        self.args = open_args
-        self.kwargs = open_kwargs
-
-    @contextmanager
-    def open(self):
-        try:
-            # Can't just yield open(...) because an exception could be raised
-            # from the context.
-            f = open(*self.args, **self.kwargs)
-        except OSError as e:
-            # Can't just call and catch TypeError, because handler may raise.
-            if callable(self.handler):
-                yield self.handler(e)
-            else:
-                raise
-        else:
-            with f:
-                yield f
-
-
-def autofile(*args, handler=None, **kwargs):
-    '''
-    Create an autofile type. When used by automain, autofiles are automatically
-    opened before main is called. The opened file objects are passed as
-    arguments, and automatically closed when main returns, even if it throws an
-    exception.
-
-    The optional handler argument allows you define an error-handler function.
-    If given, and an exception is raised trying to open the file, the function
-    is called with the exception, and the return value is passed to the main
-    function, instead of a file object. If no handler is given, the exception
-    is simply raised back to the main caller.
-
-    Of course, because the objects passed to main as arguments are normal file
-    objects, you can use your own "with" context to close the file earlier, as
-    consecutive close() calls are safe no-ops. Just be careful not to close
-    a standard stream if you provide it as a default argument.
-
-    Example:
-
-        @automain(__name__):
-        def main(
-            input_file: ("The file to read from", autofile('r')) =stdin,
-            output_file: ("The file to write to", autofile('w')) =stdout):
-
-            ...
-
-    '''
-    class ScopedAutofile(_Autofile):
-        def __init__(self, filename):
-            super().__init__(handler, filename, *args, **kwargs)
-    return ScopedAutofile
-
-
 def _get_type_description(annotation):
     '''
     Given an annotation, return the (type, description) for the parameter
@@ -286,6 +212,81 @@ def automain(module=None, description=None, epilog=None):
         return main_wrapper
 
     return decorator
+
+
+class _Autofile:
+    '''
+    Base class for the autofile feature. Should be instantiated with the future
+    arguments to open(). See the `autofile` function for a system to create
+    _Autofile subclasses with pre-defined args and kwargs for open(), which can
+    be instantiated with a filename.
+
+    This is a class, and not a function, to make it easy to detect as a main
+    function annotation.
+    '''
+    def __init__(self, handler, *open_args, **open_kwargs):
+        '''
+        Initialize the Autofile.
+        `open_args`: the arguments to the open(...) call
+        `open_kwargs`: the kwargs to the open(...) call
+        `handler`: An optional error handler. If an exception is raised opening
+            the file, it is passed to this function, and the return value sent
+            to the context instead of a file object.
+        '''
+        self.handler = handler
+        self.args = open_args
+        self.kwargs = open_kwargs
+
+    @contextmanager
+    def open(self):
+        try:
+            # Can't just yield open(...) because an OSError could hypothetically
+            # be raised from the context
+            f = open(*self.args, **self.kwargs)
+        except OSError as e:
+            # Can't just try to call handler and catch a TypeError, because
+            # handler may raise.
+            if callable(self.handler):
+                yield self.handler(e)
+            else:
+                raise
+        else:
+            with f:
+                yield f
+
+
+def autofile(*args, handler=None, **kwargs):
+    '''
+    Create an autofile type. When used by automain, autofiles are automatically
+    opened before main is called. The opened file objects are passed as
+    arguments, and automatically closed when main returns, even if it throws an
+    exception.
+
+    The optional handler argument allows you define an error-handler function.
+    If given, and an exception is raised trying to open the file, the function
+    is called with the exception, and the return value is passed to the main
+    function, instead of a file object. If no handler is given, the exception
+    is simply raised back to the main caller.
+
+    Of course, because the objects passed to main as arguments are normal file
+    objects, you can use your own "with" context to close the file earlier, as
+    consecutive close() calls are safe no-ops. Just be careful not to close
+    a standard stream if you provide it as a default argument.
+
+    Example:
+
+        @automain(__name__):
+        def main(
+            input_file: ("The file to read from", autofile('r')) =stdin,
+            output_file: ("The file to write to", autofile('w')) =stdout):
+
+            ...
+
+    '''
+    class ScopedAutofile(_Autofile):
+        def __init__(self, filename):
+            super().__init__(handler, filename, *args, **kwargs)
+    return ScopedAutofile
 
 
 @contextmanager
