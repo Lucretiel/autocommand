@@ -262,16 +262,16 @@ def autofile(*args, handler=None, **kwargs):
     arguments, and automatically closed when main returns, even if it throws an
     exception.
 
+    Of course, because the objects passed to main as arguments are normal file
+    objects, you can use your own "with" context to close the file earlier, as
+    consecutive close() calls are safe no-ops. Just be careful not to close
+    a standard stream if you provide it as a default argument.
+
     The optional handler argument allows you define an error-handler function.
     If given, and an exception is raised trying to open the file, the function
     is called with the exception, and the return value is passed to the main
     function, instead of a file object. If no handler is given, the exception
     is simply raised back to the main caller.
-
-    Of course, because the objects passed to main as arguments are normal file
-    objects, you can use your own "with" context to close the file earlier, as
-    consecutive close() calls are safe no-ops. Just be careful not to close
-    a standard stream if you provide it as a default argument.
 
     Example:
 
