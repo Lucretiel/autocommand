@@ -1,23 +1,22 @@
 # Copyright 2014-2015 Nathan West
 #
-# This file is part of automain.
+# This file is part of autocommand.
 #
-# automain is free software: you can redistribute it and/or modify
+# autocommand is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# automain is distributed in the hope that it will be useful,
+# autocommand is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Lesser General Public License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public License
-# along with automain.  If not, see <http://www.gnu.org/licenses/>.
-#
+# along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
 from inspect import signature, Parameter
-from argparse import ArgumentParser
+from argparse import ArgumentParser, _StoreConstAction
 from contextlib import contextmanager, ExitStack
 from io import IOBase
 
@@ -50,12 +49,13 @@ def _get_type_description(annotation):
 def _add_argument(param, used_char_args):
     '''
     Get the *args and **kwargs to use for parser.add_argument for a given
-    parameter.
+    parameter. used_char_args is the set of -short options currently already in
+    use.
     '''
     if param.kind is param.POSITIONAL_ONLY:
         raise ValueError("parameter must have a name", param)
     elif param.kind is param.VAR_KEYWORD:
-        raise ValueError("automain doesn't understand kwargs", param)
+        raise ValueError("can't use a **kwargs parameter", param)
 
     arg_spec = {}
     is_option = False
@@ -71,6 +71,12 @@ def _add_argument(param, used_char_args):
     if arg_type is None and default not in (_empty, None):
         arg_type = type(default)
 
+    # Add default. The presence of a default means this is an option, not an
+    # argument.
+    if default is not _empty:
+        arg_spec['default'] = default
+        is_option = True
+
     # Add the type
     if arg_type is not None:
         # Special case for bool: make it just a --switch
@@ -80,16 +86,17 @@ def _add_argument(param, used_char_args):
             else:
                 arg_spec['action'] = 'store_false'
 
-            # Make it an option even if there's no explicit default
+            # Make it an option even if there may not be a default
             is_option = True
-            # TODO: Update bool to support --no-option, as a counter to --option
 
-        # Special case for file object types: make it a string type, for filename
+        # Special case for file types: make it a string type, for filename
         elif issubclass(arg_type, IOBase):
             arg_spec['type'] = str
 
         # TODO: special case for list type.
         #   - How to specificy type of list members?
+        #       - param: [int]
+        #       - param: int =[]
         #   - action='append' vs nargs='*'
 
         # Everything else: make it a plain type
@@ -107,31 +114,23 @@ def _add_argument(param, used_char_args):
     if description is not None:
         arg_spec['help'] = description
 
-    # Add default. The presence of a default means this is an option, not an
-    # argument.
-    if default is not _empty:
-        arg_spec['default'] = default
-        is_option = True
-
     # Get the --flags
     flags = []
     name = param.name
 
     if is_option:
-        # Add the first letter as a -short option. Attempt to add -c or -C,
-        # trying various capitalizations.
-        for letter in name[0], name[0].upper(), name[0].lower():
+        # Add the first letter as a -short option.
+        for letter in name[0], name[0].swapcase()
             if letter not in used_char_args:
                 used_char_args.add(letter)
                 flags.append('-{}'.format(letter))
                 break
 
-        # If the function argument only had one letter, and it could be added
-        # as a -short option, don't bother adding a --long option
-        if not (len(name) == 1 and flags):
+        # If the parameter is a --long option, or is a -short option that
+        # somehow failed to get a flag, add it.
+        if len(name) > 1 or not flags:
             flags.append('--{}'.format(name))
 
-        # Add an explicit dest, in case the name was converted
         arg_spec['dest'] = name
     else:
         flags.append(name)
@@ -139,7 +138,7 @@ def _add_argument(param, used_char_args):
     return flags, arg_spec
 
 
-def automain(module=None, description=None, epilog=None):
+def automain(module=None, description=None, epilog=None, add_nos=False):
     '''
     Decorator to create an automain function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
@@ -152,10 +151,18 @@ def automain(module=None, description=None, epilog=None):
     printed and a SystemExit to be raised.
 
     Optionally, pass a module name (typically __name__) as the first argument
-    to `automain`. If you do, and it is "__main__", the decorated function is
-    called immediately with sys.argv, and the progam is exited with the return
-    value; this is so that you can call @automain(__name__) and still be able
-    to import the module for testing.
+    to `automain`. If you do, and it is "__main__", the decorated function
+    is called immediately with sys.argv, and the progam is exited with the
+    return value; this is so that you can call @automain(__name__) and still
+    be able to import the module for testing.
+
+    If no argparse description is given, it defaults to the decorated
+    functions's docstring, if present.
+
+    If add_nos is True, every boolean option will have a --no- version created
+    as well, which inverts the option. For instance, the --verbose option will
+    have a --no-verbose counterpart. These are not mutually exclusive-
+    whichever one appears last on the command line will have precedence.
 
     The decorated function is attached to the result as the `main` attribute.
     '''
@@ -169,11 +176,24 @@ def automain(module=None, description=None, epilog=None):
         used_char_args = {'h'}
         # Add each argument. Do single-character arguments first, if present,
         # so that they get priority, and don't have to get --long versions.
-        # sorted is stable, so the parameters will still be in relative order.
+        # sorted is stable, so the parameters will still be in relative order
         for param in sorted(main_sig.parameters.values(),
                 key=lambda param: len(param.name) > 1):
             flags, spec = _add_argument(param, used_char_args)
-            parser.add_argument(*flags, **spec)
+            action = parser.add_argument(*flags, **spec)
+
+            # If requested, add --no- option counterparts. Because the option/
+            # argument names can't have a hyphen character, these shouldn't
+            # conflict with any existing options.
+            # TODO: decide if it's better, stylistically, to do these at the
+            # end, AFTER all of the parameters.
+            if isinstance(action, _StoreConstAction):
+                parser.add_argument(
+                    '--no-{}'.format(action.dest),
+                    action='store_const',
+                    dest=action.dest,
+                    const=action.default)
+                # No need for a default, as the first action takes precedence.
 
         # No functools.wraps, because the signature and functionality is so
         # different.
@@ -236,16 +256,17 @@ class _Autofile:
         self.handler = handler
         self.args = open_args
         self.kwargs = open_kwargs
+        self.f = None
 
+    # It might be better to just make _Autofile a context manager directory,
+    # by giving it __enter__ and __exit__. The implementation is actually more
+    # complicatated than this open(self) method, due to the error handler, so
+    # for now I'm sticking with this.
     @contextmanager
     def open(self):
         try:
-            # Can't just yield open(...) because an OSError could hypothetically
-            # be raised from the context
             f = open(*self.args, **self.kwargs)
         except OSError as e:
-            # Can't just try to call handler and catch a TypeError, because
-            # handler may raise.
             if callable(self.handler):
                 yield self.handler(e)
             else:
@@ -257,10 +278,11 @@ class _Autofile:
 
 def autofile(*args, handler=None, **kwargs):
     '''
-    Create an autofile type. When used by automain, autofiles are automatically
+    Create an autofile type. This type is instantiated with a single filename,
+    and wraps an open call with its open() method, using the additional args
+    and kwargs provided. When used by automain, autofiles are automatically
     opened before main is called. The opened file objects are passed as
-    arguments, and automatically closed when main returns, even if it throws an
-    exception.
+    arguments, to the main function and automatically closed when main returns.
 
     Of course, because the objects passed to main as arguments are normal file
     objects, you can use your own "with" context to close the file earlier, as
@@ -274,18 +296,23 @@ def autofile(*args, handler=None, **kwargs):
     is simply raised back to the main caller.
 
     Example:
-
         @automain(__name__):
-        def main(
-            input_file: ("The file to read from", autofile('r')) =stdin,
-            output_file: ("The file to write to", autofile('w')) =stdout):
+        def copyfile(
+              input_file: ("The file to read from", autofile('rb')) =stdin,
+              output_file: ("The file to write to", autofile('wb')) =stdout):
+            """
+            This program copies its --input_file argument to its --output_file
+            argument, which default to stdin and stdout, respectively.
+            """
 
-            ...
+            data = input_file.read()
+            output_file.write(data)
 
     '''
     class ScopedAutofile(_Autofile):
         def __init__(self, filename):
-            super().__init__(handler, filename, *args, **kwargs)
+            # super() wigs me out
+            _Autofile.__init__(self, handler, filename, *args, **kwargs)
     return ScopedAutofile
 
 
