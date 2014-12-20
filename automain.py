@@ -17,7 +17,7 @@
 
 from inspect import signature, Parameter
 from argparse import ArgumentParser, _StoreConstAction
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager
 from io import IOBase
 
 
@@ -46,7 +46,7 @@ def _get_type_description(annotation):
         annotation)
 
 
-def _add_argument(param, used_char_args):
+def _make_argument(param, used_char_args):
     '''
     Get the *args and **kwargs to use for parser.add_argument for a given
     parameter. used_char_args is the set of -short options currently already in
@@ -99,7 +99,6 @@ def _add_argument(param, used_char_args):
         #       - param: int =[]
         #   - action='append' vs nargs='*'
 
-        # Everything else: make it a plain type
         else:
             arg_spec['type'] = arg_type
 
@@ -120,7 +119,7 @@ def _add_argument(param, used_char_args):
 
     if is_option:
         # Add the first letter as a -short option.
-        for letter in name[0], name[0].swapcase()
+        for letter in name[0], name[0].swapcase():
             if letter not in used_char_args:
                 used_char_args.add(letter)
                 flags.append('-{}'.format(letter))
@@ -138,7 +137,7 @@ def _add_argument(param, used_char_args):
     return flags, arg_spec
 
 
-def automain(module=None, description=None, epilog=None, add_nos=False):
+def automain(module=None, *, description=None, epilog=None, add_nos=False):
     '''
     Decorator to create an automain function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
@@ -179,7 +178,7 @@ def automain(module=None, description=None, epilog=None, add_nos=False):
         # sorted is stable, so the parameters will still be in relative order
         for param in sorted(main_sig.parameters.values(),
                 key=lambda param: len(param.name) > 1):
-            flags, spec = _add_argument(param, used_char_args)
+            flags, spec = _make_argument(param, used_char_args)
             action = parser.add_argument(*flags, **spec)
 
             # If requested, add --no- option counterparts. Because the option/
@@ -198,29 +197,17 @@ def automain(module=None, description=None, epilog=None, add_nos=False):
         # No functools.wraps, because the signature and functionality is so
         # different.
         def main_wrapper(*argv):
-            # Update parser with program name
             parser.prog = argv[0]
 
-            # Parse arguments
             args = vars(parser.parse_args(argv[1:]))
 
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
             function_args = main_sig.bind_partial()
+            function_args.arguments.update(args)
 
-            with ExitStack() as stack:
-                # Open autofiles- replace _Autofile instanes with associated
-                # file objects.
-                for arg_name, arg_value in args.items():
-                    if isinstance(arg_value, _Autofile):
-                        args[arg_name] = stack.enter_context(arg_value.open())
-
-                # Apply command line arguments to function arguments
-                function_args.arguments.update(args)
-
-                # Call main function
-                return main(*function_args.args, **function_args.kwargs)
+            return main(*function_args.args, **function_args.kwargs)
 
         # If we are running as a script/program, call main right away and exit.
         if module == '__main__':
@@ -232,88 +219,6 @@ def automain(module=None, description=None, epilog=None, add_nos=False):
         return main_wrapper
 
     return decorator
-
-
-class _Autofile:
-    '''
-    Base class for the autofile feature. Should be instantiated with the future
-    arguments to open(). See the `autofile` function for a system to create
-    _Autofile subclasses with pre-defined args and kwargs for open(), which can
-    be instantiated with a filename.
-
-    This is a class, and not a function, to make it easy to detect as a main
-    function annotation.
-    '''
-    def __init__(self, handler, *open_args, **open_kwargs):
-        '''
-        Initialize the Autofile.
-        `open_args`: the arguments to the open(...) call
-        `open_kwargs`: the kwargs to the open(...) call
-        `handler`: An optional error handler. If an exception is raised opening
-            the file, it is passed to this function, and the return value sent
-            to the context instead of a file object.
-        '''
-        self.handler = handler
-        self.args = open_args
-        self.kwargs = open_kwargs
-        self.f = None
-
-    # It might be better to just make _Autofile a context manager directory,
-    # by giving it __enter__ and __exit__. The implementation is actually more
-    # complicatated than this open(self) method, due to the error handler, so
-    # for now I'm sticking with this.
-    @contextmanager
-    def open(self):
-        try:
-            f = open(*self.args, **self.kwargs)
-        except OSError as e:
-            if callable(self.handler):
-                yield self.handler(e)
-            else:
-                raise
-        else:
-            with f:
-                yield f
-
-
-def autofile(*args, handler=None, **kwargs):
-    '''
-    Create an autofile type. This type is instantiated with a single filename,
-    and wraps an open call with its open() method, using the additional args
-    and kwargs provided. When used by automain, autofiles are automatically
-    opened before main is called. The opened file objects are passed as
-    arguments, to the main function and automatically closed when main returns.
-
-    Of course, because the objects passed to main as arguments are normal file
-    objects, you can use your own "with" context to close the file earlier, as
-    consecutive close() calls are safe no-ops. Just be careful not to close
-    a standard stream if you provide it as a default argument.
-
-    The optional handler argument allows you define an error-handler function.
-    If given, and an exception is raised trying to open the file, the function
-    is called with the exception, and the return value is passed to the main
-    function, instead of a file object. If no handler is given, the exception
-    is simply raised back to the main caller.
-
-    Example:
-        @automain(__name__):
-        def copyfile(
-              input_file: ("The file to read from", autofile('rb')) =stdin,
-              output_file: ("The file to write to", autofile('wb')) =stdout):
-            """
-            This program copies its --input_file argument to its --output_file
-            argument, which default to stdin and stdout, respectively.
-            """
-
-            data = input_file.read()
-            output_file.write(data)
-
-    '''
-    class ScopedAutofile(_Autofile):
-        def __init__(self, filename):
-            # super() wigs me out
-            _Autofile.__init__(self, handler, filename, *args, **kwargs)
-    return ScopedAutofile
 
 
 @contextmanager
