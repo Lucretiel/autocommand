@@ -24,6 +24,12 @@ from io import IOBase
 _empty = Parameter.empty
 
 
+class AutocommandError(TypeError): pass
+class AnnotationError(AutocommandError): pass
+class PositionalArgError(AutocommandError): pass
+class KWArgError(AutocommandError): pass
+
+
 def _get_type_description(annotation):
     '''
     Given an annotation, return the (type, description) for the parameter
@@ -41,9 +47,7 @@ def _get_type_description(annotation):
         elif isinstance(arg1, str) and isinstance(arg2, type):
             return arg2, arg1
 
-    raise ValueError(
-        'parameter annotation must be type, description, or tuple of both',
-        annotation)
+    raise AnnotationError(annotation)
 
 
 def _make_argument(param, used_char_args):
@@ -53,9 +57,9 @@ def _make_argument(param, used_char_args):
     use.
     '''
     if param.kind is param.POSITIONAL_ONLY:
-        raise ValueError("parameter must have a name", param)
+        raise PositionalArgError(param)
     elif param.kind is param.VAR_KEYWORD:
-        raise ValueError("can't use a **kwargs parameter", param)
+        raise KWArgError(param)
 
     arg_spec = {}
     is_option = False
