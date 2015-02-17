@@ -141,7 +141,7 @@ def _make_argument(param, used_char_args):
     return flags, arg_spec
 
 
-def automain(module=None, *, description=None, epilog=None, add_nos=False):
+def automain(module=None, *, description=None, epilog=None, add_nos=False, parser=None):
     '''
     Decorator to create an automain function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
@@ -153,50 +153,55 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False):
     supplying invalid arguments or '-h' will cause a usage statement to be
     printed and a SystemExit to be raised.
 
-    Optionally, pass a module name (typically __name__) as the first argument
+    Optionally, pass a module name (typically `__name__`) as the first argument
     to `automain`. If you do, and it is "__main__", the decorated function
     is called immediately with sys.argv, and the progam is exited with the
     return value; this is so that you can call @automain(__name__) and still
     be able to import the module for testing.
 
     If no argparse description is given, it defaults to the decorated
-    functions's docstring, if present.
+    functions's docstring, if present. Additionally, the parser's prog is set
+    to argv[0] when the wrapped main is called.
 
     If add_nos is True, every boolean option will have a --no- version created
     as well, which inverts the option. For instance, the --verbose option will
     have a --no-verbose counterpart. These are not mutually exclusive-
     whichever one appears last on the command line will have precedence.
+    
+    If a parser is given, it is used instead of one generated from the function
+    signature.
 
-    The decorated function is attached to the result as the `main` attribute.
+    The decorated function is attached to the result as the `main` attribute,
+    and the parser is attached as the `parser` attribute.
     '''
-    # TODO: document parameter-to-argparse logic
     def decorator(main):
-        parser = ArgumentParser(
-            description=description or main.__doc__,
-            epilog=epilog)
-        main_sig = signature(main)
-
-        used_char_args = {'h'}
-        # Add each argument. Do single-character arguments first, if present,
-        # so that they get priority, and don't have to get --long versions.
-        # sorted is stable, so the parameters will still be in relative order
-        for param in sorted(main_sig.parameters.values(),
-                key=lambda param: len(param.name) > 1):
-            flags, spec = _make_argument(param, used_char_args)
-            action = parser.add_argument(*flags, **spec)
-
-            # If requested, add --no- option counterparts. Because the option/
-            # argument names can't have a hyphen character, these shouldn't
-            # conflict with any existing options.
-            # TODO: decide if it's better, stylistically, to do these at the
-            # end, AFTER all of the parameters.
-            if add_nos and isinstance(action, _StoreConstAction):
-                parser.add_argument(
-                    '--no-{}'.format(action.dest),
-                    action='store_const',
-                    dest=action.dest,
-                    const=action.default)
-                # No need for a default, as the first action takes precedence.
+        if parser is None:
+            parser = ArgumentParser(
+                description=description or main.__doc__,
+                epilog=epilog)
+            main_sig = signature(main)
+    
+            used_char_args = {'h'}
+            # Add each argument. Do single-character arguments first, if present,
+            # so that they get priority, and don't have to get --long versions.
+            # sorted is stable, so the parameters will still be in relative order
+            for param in sorted(main_sig.parameters.values(),
+                    key=lambda param: len(param.name) > 1):
+                flags, spec = _make_argument(param, used_char_args)
+                action = parser.add_argument(*flags, **spec)
+    
+                # If requested, add --no- option counterparts. Because the option/
+                # argument names can't have a hyphen character, these shouldn't
+                # conflict with any existing options.
+                # TODO: decide if it's better, stylistically, to do these at the
+                # end, AFTER all of the parameters.
+                if add_nos and isinstance(action, _StoreConstAction):
+                    parser.add_argument(
+                        '--no-{}'.format(action.dest),
+                        action='store_const',
+                        dest=action.dest,
+                        const=action.default)
+                    # No need for a default, as the first action takes precedence.
 
         # No functools.wraps, because the signature and functionality is so
         # different.
@@ -220,6 +225,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False):
 
         # Otherwise, attach the wrapped main function, and return the wrapper.
         main_wrapper.main = main
+        main_wrapper.parser = parser
         return main_wrapper
 
     return decorator
