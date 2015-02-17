@@ -248,8 +248,8 @@ def smart_open(filename_or_file, *args, **kwargs):
                 print("Some stuff", file=f)
                 # If it was a filename, f is closed at the end here.
     '''
-    if isinstance(filename_or_file, (str, bytes, int)):
+    if isinstance(filename_or_file, IOBase):
+        yield filename_or_file
+    else:
         with open(filename_or_file, *args, **kwargs) as f:
             yield f
-    else:
-        yield filename_or_file
