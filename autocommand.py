@@ -190,7 +190,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False):
             # conflict with any existing options.
             # TODO: decide if it's better, stylistically, to do these at the
             # end, AFTER all of the parameters.
-            if isinstance(action, _StoreConstAction):
+            if add_nos and isinstance(action, _StoreConstAction):
                 parser.add_argument(
                     '--no-{}'.format(action.dest),
                     action='store_const',
