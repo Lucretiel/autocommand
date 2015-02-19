@@ -175,11 +175,12 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
     and the parser is attached as the `parser` attribute.
     '''
     def decorator(main):
+        main_sig = signature(main)
+
         if parser is None:
             parser = ArgumentParser(
                 description=description or main.__doc__,
                 epilog=epilog)
-            main_sig = signature(main)
     
             used_char_args = {'h'}
             # Add each argument. Do single-character arguments first, if present,
