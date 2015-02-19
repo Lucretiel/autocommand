@@ -90,7 +90,7 @@ def _make_argument(param, used_char_args):
             else:
                 arg_spec['action'] = 'store_false'
 
-            # Make it an option even if there may not be a default
+            # Switches are always options
             is_option = True
 
         # Special case for file types: make it a string type, for filename
@@ -202,20 +202,18 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
                         action='store_const',
                         dest=action.dest,
                         const=action.default)
-                    # No need for a default, as the first action takes precedence.
+                    # No need for a default=, as the first action takes precedence.
 
         # No functools.wraps, because the signature and functionality is so
         # different.
         def main_wrapper(*argv):
             parser.prog = argv[0]
 
-            args = vars(parser.parse_args(argv[1:]))
-
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
             function_args = main_sig.bind_partial()
-            function_args.arguments.update(args)
+            function_args.arguments.update(vars(parser.parse_args(argv[1:])))
 
             return main(*function_args.args, **function_args.kwargs)
 
