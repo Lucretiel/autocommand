@@ -39,7 +39,7 @@ As you can see, automain uses argparse to convert the signature of the function 
 
 ### Types
 
-You can use a type annotation to give an argument a type besides `str`. Any type (or in fact any callable) that returns an object when given a string argument can be used.
+You can use a type annotation to give an argument a type besides `str`. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later. Keep in mind that arparse will catch `TypeErrors` raised during parsing, so you can supply a callable and do some basic argument validation as well.
 
 ```python
 @automain(__name__)
@@ -49,7 +49,7 @@ def net_client(host, port: int):
 
 ### Options
 
-To create --option switches, just assign a default. Automain will automatically create --long and -short switches.
+To create `--option` switches, just assign a default. Automain will automatically create `--long` and `-s`hort switches.
 
 ```python
 @automain(__name__)
@@ -209,16 +209,16 @@ LOUD NOISES
 
 ### Features, notes, and limitations
 
-- --options are given single character -short options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given --long versions.
+- `--option` are given single character `-s`hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given `--long` versions.
 - `automain` supports a few other kwargs:
     - If a `parser` is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in `automain`.
-    - If `add_nos` is set to True, then for each boolean --switch in the parameter list, a --no-switch is added, to cancel it out.
+    - If `add_nos` is set to True, then for each boolean `--switch` in the parameter list, a `--no-switch` is added, to cancel it out.
 - If the decorated function has a `*args`, then 0 or more arguments are collected into a list. No default value can be given, but a type and/or description annotation may.
 - There are a few possible exceptions that `automain` can raise. All of them derive from `autocommand.AutocommandError`, which is a `TypeError`.
     - If an invalid annotation is given (that is, it isn't a `type`, `str`, `(type, str)`, or `(str, type)`, an `AnnotationError` is raised
     - If the function has a **kwargs parameter, a `KWargError` is raised.
     - If, somehow, the function has a positional-only parameter, a `PositionalArgError` is raised. This means that the argument doesn't have a name, which is currently not possible with a plain `def` or `lambda`, though many built-in functions have this kind of parameter.
 - There are a few argparse features that are not supported by autocommand.
-    - It isn't possible to have an optional positional argument (as opposed to a --option). POSIX and GNU think this is bad form anyway, so it's not a big deal.
+    - It isn't possible to have an optional positional argument (as opposed to a `--option`). POSIX and GNU think this is bad form anyway.
     - It isn't possible to have mutually exclusive arguments or options
     - It isn't possible to have subcommands or subparsers, though I'm working on a few solutions involving classes or nested function definitions to allow this.
