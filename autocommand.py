@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
-from inspect import signature, Parameter
+from inspect import signature, Parameter, getdoc
 from argparse import ArgumentParser, _StoreConstAction
 from contextlib import contextmanager
 from io import IOBase
@@ -181,7 +181,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
             local_parser = parser
         else:
             local_parser = ArgumentParser(
-                description=description or main.__doc__,
+                description=description or getdoc(main),
                 epilog=epilog)
     
             used_char_args = {'h'}
