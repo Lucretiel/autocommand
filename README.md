@@ -7,7 +7,7 @@ A library to automatically generate and run simple argparse parsers from functio
 
 ### Basic
 
-Autocommand turns a function into a command-line program. It converts the function's argument signature into command-line arguments, and automatically runs the function if the module was called as `__main__`. In effect, it lets your create a smart main function.
+Autocommand turns a function into a command-line program. It converts the function's parameter signature into command-line arguments, and automatically runs the function if the module was called as `__main__`. In effect, it lets your create a smart main function.
 
 ```python
 from autocommand import automain
@@ -35,11 +35,11 @@ echo.py: error: unrecognized arguments: world
 
 As you can see, automain uses argparse to convert the signature of the function into an argument spec, which automatically handles creating a usage statement and argument parsing.
 
-`automain` is passed `__name__` to allow it to automatically run the decorated function. If `__name__ == '__main__'`, the arguments are parsed and the function is executed. The program's return code is taken from the return value of the function, following all the same rules as `sys.exit`.
+`automain` is passed `__name__` to allow it to automatically run the decorated function. If `__name__ == '__main__'`, the arguments are parsed and the function is executed. The program's return code is taken from the return value of the function, via `sys.exit`.
 
 ### Types
 
-You can use a type annotation to give an argument a type besides `str`. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later. Keep in mind that `argparse` will catch `TypeErrors` raised during parsing, so you can supply a callable and do some basic argument validation as well.
+You can use a type annotation to give an argument a type. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later. Keep in mind that `argparse` will catch `TypeErrors` raised during parsing, so you can supply a callable and do some basic argument validation as well.
 
 ```python
 @automain(__name__)
@@ -68,7 +68,7 @@ optional arguments:
   -c CONFIG, --config CONFIG
 ```
 
-The options type is automatically deduced from the default, unless one is explicitly given in an annotation:
+The option's type is automatically deduced from the default, unless one is explicitly given in an annotation:
 
 ```python
 @automain(__name__)
@@ -219,7 +219,7 @@ LOUD NOISES
 - If the decorated function has a `*args`, then 0 or more arguments are collected into a list. No default value can be given, but a type and/or description annotation may.
 - There are a few possible exceptions that `automain` can raise. All of them derive from `autocommand.AutocommandError`, which is a `TypeError`.
     - If an invalid annotation is given (that is, it isn't a `type`, `str`, `(type, str)`, or `(str, type)`, an `AnnotationError` is raised
-    - If the function has a **kwargs parameter, a `KWargError` is raised.
+    - If the function has a `**kwargs` parameter, a `KWargError` is raised.
     - If, somehow, the function has a positional-only parameter, a `PositionalArgError` is raised. This means that the argument doesn't have a name, which is currently not possible with a plain `def` or `lambda`, though many built-in functions have this kind of parameter.
 - There are a few argparse features that are not supported by autocommand.
     - It isn't possible to have an optional positional argument (as opposed to a `--option`). POSIX and GNU think this is bad form anyway.
