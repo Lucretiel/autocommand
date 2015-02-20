@@ -189,7 +189,7 @@ def copy_net(
 
 ### Testing and Library use
 
-The decorated function is only called and exited from if the first argument to `automain` is `__main__`. If no argument is given, or it is not main, then a new main wrapper function is created by the decorator. This function has the signature `*argv`, and is intended to be called with arguments as from `sys.argv`. The function has the attributes `parser` and `main`, which are the generated `ArgumentParser` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a `parse_args()` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling `sys.exit`, the `parse_args()` function will raise a `SystemExit` in the event of a parsing error or `-h/--help` argument.
+The decorated function is only called and exited from if the first argument to `automain` is `'__main__'`. If no argument is given, or it is not main, then a new main wrapper function is created by the decorator. This function has the signature `*argv`, and is intended to be called with arguments as from `sys.argv`. The function has the attributes `parser` and `main`, which are the generated `ArgumentParser` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a `parse_args()` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling `sys.exit`, the `parse_args()` function will raise a `SystemExit` in the event of a parsing error or `-h/--help` argument.
 
 ```python
 @automain()
@@ -212,7 +212,7 @@ LOUD NOISES
 
 ### Features, notes, and limitations
 
-- `--option` are given single character `-s`hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given `--long` versions.
+- `--options` are given single character `-s`hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given `--long` versions.
 - `automain` supports a few other kwargs:
     - If a `parser` is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in `automain`.
     - If `add_nos` is set to True, then for each boolean `--switch` in the parameter list, a `--no-switch` is added, to cancel it out.
