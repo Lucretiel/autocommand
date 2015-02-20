@@ -7,7 +7,7 @@ A library to automatically generate and run simple argparse parsers from functio
 
 ### Basic
 
-Autocommand turns a function into a command-line program. It converts the function's argument signature into command-line arguments, and automatically runs the function if the module was called as '__main__'. In effect, it lets your create a smart main function.
+Autocommand turns a function into a command-line program. It converts the function's argument signature into command-line arguments, and automatically runs the function if the module was called as `__main__`. In effect, it lets your create a smart main function.
 
 ```python
 from autocommand import automain
