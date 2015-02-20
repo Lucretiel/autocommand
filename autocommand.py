@@ -204,8 +204,6 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
                         const=action.default)
                     # No need for a default=, as the first action takes precedence.
 
-        # No functools.wraps, because the signature and functionality is so
-        # different.
         def main_wrapper(*argv):
             parser.prog = argv[0]
 
