@@ -94,6 +94,7 @@ usage: http.py [-h] [-p PORT] host
 echo.py: error: argument -p/--port: invalid int value: 'blah'
 ```
 
+#### Switches
 If an argument is given a default value of `True` or `False`, or given an explicit `bool` type, it becomes an option switch.
 
 ```python
@@ -111,9 +112,11 @@ optional arguments:
   -q, --quiet
 ```
 
-Automain attempts to do the "correct thing" in these cases- if the default is `True`, then supplying the switch makes the argument `False`; if the type is bool and the default is some other `True` value, then supplying the switch makes the argument `False`, while not supplying the switch makes the argument the default value.
+Automain attempts to do the "correct thing" in these cases- if the default is `True`, then supplying the switch makes the argument `False`; if the type is `bool` and the default is some other `True` value, then supplying the switch makes the argument `False`, while not supplying the switch makes the argument the default value.
 
-If the default value is a file object, such as sys.stdout, then automain just looks for a string, for a file path. It doesn't do any special checking on the string, though- it's better to let the client decide how to handle errors in this case. Instead, it provides a special context manager called `smart_open`, which behaves exactly like `open` if a filename or other openable type is provided, but also lets you use already open files:
+#### Files
+
+If the default value is a file object, such as `sys.stdout`, then automain just looks for a string, for a file path. It doesn't do any special checking on the string, though (such as checking if the file exists)- it's better to let the client decide how to handle errors in this case. Instead, it provides a special context manager called `smart_open`, which behaves exactly like `open` if a filename or other openable type is provided, but also lets you use already open files:
 
 ```python
 from autocommand import automain, smart_open
