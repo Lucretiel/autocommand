@@ -39,7 +39,7 @@ As you can see, automain uses argparse to convert the signature of the function 
 
 ### Types
 
-You can use a type annotation to give an argument a type besides `str`. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later. Keep in mind that arparse will catch `TypeErrors` raised during parsing, so you can supply a callable and do some basic argument validation as well.
+You can use a type annotation to give an argument a type besides `str`. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later. Keep in mind that `argparse` will catch `TypeErrors` raised during parsing, so you can supply a callable and do some basic argument validation as well.
 
 ```python
 @automain(__name__)
