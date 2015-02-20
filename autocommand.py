@@ -177,8 +177,10 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
     def decorator(main):
         main_sig = signature(main)
 
-        if parser is None:
-            parser = ArgumentParser(
+        if parser is not None:
+            local_parser = parser
+        else:
+            local_parser = ArgumentParser(
                 description=description or main.__doc__,
                 epilog=epilog)
     
@@ -189,7 +191,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
             for param in sorted(main_sig.parameters.values(),
                     key=lambda param: len(param.name) > 1):
                 flags, spec = _make_argument(param, used_char_args)
-                action = parser.add_argument(*flags, **spec)
+                action = local_parser.add_argument(*flags, **spec)
     
                 # If requested, add --no- option counterparts. Because the option/
                 # argument names can't have a hyphen character, these shouldn't
@@ -197,7 +199,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
                 # TODO: decide if it's better, stylistically, to do these at the
                 # end, AFTER all of the parameters.
                 if add_nos and isinstance(action, _StoreConstAction):
-                    parser.add_argument(
+                    local_parser.add_argument(
                         '--no-{}'.format(action.dest),
                         action='store_const',
                         dest=action.dest,
@@ -205,13 +207,13 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
                     # No need for a default=, as the first action takes precedence.
 
         def main_wrapper(*argv):
-            parser.prog = argv[0]
+            local_parser.prog = argv[0]
 
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
             function_args = main_sig.bind_partial()
-            function_args.arguments.update(vars(parser.parse_args(argv[1:])))
+            function_args.arguments.update(vars(local_parser.parse_args(argv[1:])))
 
             return main(*function_args.args, **function_args.kwargs)
 
@@ -222,7 +224,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
 
         # Otherwise, attach the wrapped main function, and return the wrapper.
         main_wrapper.main = main
-        main_wrapper.parser = parser
+        main_wrapper.parser = local_parser
         return main_wrapper
 
     return decorator
