@@ -147,10 +147,10 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
     analyzed, and an ArgumentParser is created, using the `description` and
     `epilog` parameters, to parse command line arguments corrosponding to the
     function's parameters. The function's signature is changed to accept *argv
-    parameters, as from `sys.argv`, though you can supply your own. When called,
-    the function parses the arguments provided, then supplies them to the
-    decorated function. Keep in mind that this happens with plain argparse, so
-    supplying invalid arguments or '-h' will cause a usage statement to be
+    parameters, as from `sys.argv`, though you can supply your own. When
+    called, the function parses the arguments provided, then supplies them to
+    the decorated function. Keep in mind that this happens with plain argparse,
+    so supplying invalid arguments or '-h' will cause a usage statement to be
     printed and a `SystemExit` to be raised.
 
     Optionally, pass a module name (typically `__name__`) as the first argument
@@ -197,8 +197,8 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
                 # If requested, add --no- option counterparts. Because the
                 # option/argument names can't have a hyphen character, these
                 # shouldn't conflict with any existing options.
-                # TODO: decide if it's better, stylistically, to do these at the
-                # end, AFTER all of the parameters.
+                # TODO: decide if it's better, stylistically, to do these at
+                # the end, AFTER all of the parameters.
                 if add_nos and isinstance(action, _StoreConstAction):
                     local_parser.add_argument(
                         '--no-{}'.format(action.dest),
