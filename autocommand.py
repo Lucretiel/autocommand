@@ -141,9 +141,14 @@ def _make_argument(param, used_char_args):
     return flags, arg_spec
 
 
-def automain(module=None, *, description=None, epilog=None, add_nos=False, parser=None):
+def autocommand(
+    module=None, *,
+    description=None,
+    epilog=None,
+    add_nos=False,
+    parser=None):
     '''
-    Decorator to create an automain function. The function's signature is
+    Decorator to create an autocommand function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
     `epilog` parameters, to parse command line arguments corrosponding to the
     function's parameters. The function's signature is changed to accept *argv
@@ -154,10 +159,10 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
     printed and a `SystemExit` to be raised.
 
     Optionally, pass a module name (typically `__name__`) as the first argument
-    to `automain`. If you do, and it is "__main__", the decorated function
+    to `autocommand`. If you do, and it is "__main__", the decorated function
     is called immediately with sys.argv, and the progam is exited with the
-    return value; this is so that you can call `@automain(__name__)` and still
-    be able to import the module for testing.
+    return value; this is so that you can call `@autocommand(__name__)` and
+    still be able to import the module for testing.
 
     If no argparse description is given, it defaults to the decorated
     functions's docstring, if present. Additionally, the parser's `prog` is set
