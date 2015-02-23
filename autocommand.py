@@ -220,7 +220,7 @@ def automain(module=None, *, description=None, epilog=None, add_nos=False, parse
             return main(*function_args.args, **function_args.kwargs)
 
         # If we are running as a script/program, call main right away and exit.
-        if module == '__main__':
+        if module == '__main__' or module is True:
             from sys import exit, argv
             exit(main_wrapper(*argv))
 
