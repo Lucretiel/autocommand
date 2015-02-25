@@ -3,9 +3,7 @@ autocommand
 
 A library to automatically generate and run simple argparse parsers from function signatures.
 
-## Tutorial
-
-### Basic
+## Basic
 
 Autocommand turns a function into a command-line program. It converts the function's parameter signature into command-line arguments, and automatically runs the function if the module was called as `__main__`. In effect, it lets your create a smart main function.
 
@@ -37,7 +35,7 @@ As you can see, autocommand uses argparse to convert the signature of the functi
 
 `autocommand` is passed `__name__` to allow it to automatically run the decorated function. If `__name__ == '__main__'`, the arguments are parsed and the function is executed. The program's return code is taken from the return value of the function, via `sys.exit`.
 
-### Types
+## Types
 
 You can use a type annotation to give an argument a type. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later. Keep in mind that `argparse` will catch `TypeErrors` raised during parsing, so you can supply a callable and do some basic argument validation as well.
 
@@ -47,7 +45,7 @@ def net_client(host, port: int):
     ...
 ```
 
-### Options
+## Options
 
 To create `--option` switches, just assign a default. Autocommand will automatically create `--long` and `-s`hort switches.
 
@@ -94,7 +92,7 @@ usage: http.py [-h] [-p PORT] host
 http.py: error: argument -p/--port: invalid int value: 'blah'
 ```
 
-#### Switches
+### Switches
 If an argument is given a default value of `True` or `False`, or given an explicit `bool` type, it becomes an option switch.
 
 ```python
@@ -114,7 +112,7 @@ optional arguments:
 
 Autocommand attempts to do the "correct thing" in these cases- if the default is `True`, then supplying the switch makes the argument `False`; if the type is `bool` and the default is some other `True` value, then supplying the switch makes the argument `False`, while not supplying the switch makes the argument the default value.
 
-#### Files
+### Files
 
 If the default value is a file object, such as `sys.stdout`, then Autocommand just looks for a string, for a file path. It doesn't do any special checking on the string, though (such as checking if the file exists)- it's better to let the client decide how to handle errors in this case. Instead, it provides a special context manager called `smart_open`, which behaves exactly like `open` if a filename or other openable type is provided, but also lets you use already open files:
 
@@ -137,7 +135,7 @@ $ python write_to.py --infile hello.txt
 Hello World!
 ```
 
-### Descriptions and docstrings
+## Descriptions and docstrings
 
 The `autocommand` decorator accepts `description` and `epilog` kwargs, corresponding to the [`description`](https://docs.python.org/3/library/argparse.html#description) and [`epilog`](https://docs.python.org/3/library/argparse.html#epilog) of the `ArgumentParser`. If no description is given, but the decorated function has a  docstring, then it is taken as the `description` for the `ArgumentParser`
 
@@ -170,7 +168,7 @@ $ python copy.py --infile hello2.txt
 Hello World
 ```
 
-### Parameter descriptions
+## Parameter descriptions
 
 You can also attach description text to individual parameters in the annotation. To attach both a type and a description, supply them both in any order in a tuple
 
@@ -187,9 +185,52 @@ def copy_net(
     # Left as an exercise to the reader
 ```
 
-### Testing and Library use
+## Decorators and wrappers
 
-The decorated function is only called and exited from if the first argument to `autocommand` is `'__main__'` or `True`. If it is neither of these values, or no argument is given, then a new main wrapper function is created by the decorator. This function has the signature `*argv`, and is intended to be called with arguments as from `sys.argv`. The function has the attributes `parser` and `main`, which are the generated `ArgumentParser` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a `parse_args()` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling `sys.exit`, the `parse_args()` function will raise a `SystemExit` in the event of a parsing error or `-h/--help` argument.
+Because `autocommand` is powered by `inspect.signature`, it automatically follows wrapper chains created by `@functools.wraps`. For example:
+
+```python
+from functools import wraps
+from autocommand import autocommand
+
+def print_yielded(func):
+    '''Convert a generator into a function that prints all yielded elements'''
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        for thing in func(*args, **kwargs):
+            print(thing)
+    return wrapper
+
+@autocommand(__name__,
+    description= 'Print all the values from START to STOP, inclusive, in steps of STEP',
+    epilog=      'STOP and STEP default to 1')
+@print_yielded
+def seq(stop, start=1, step=1):
+    for i in range(start, stop + 1, step):
+        yield i
+```
+```sh
+$ seq.py -h
+usage: seq.py [-h] [-s START] [-S STEP] stop
+
+Print all the values from START to STOP, inclusive, in steps of STEP
+
+positional arguments:
+  stop
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s START, --start START
+  -S STEP, --step STEP
+
+STOP and STEP default to 1
+```
+
+Even though autocommand is being applied to the `wrapper` returned by `print_yielded`, it still retreives the signature of the underlying `seq` function to create the argument parsing.
+
+## Testing and Library use
+
+The decorated function is only called and exited from if the first argument to `autocommand` is `'__main__'` or `True`. If it is neither of these values, or no argument is given, then a new main function is created by the decorator. This function has the signature `main(*argv)`, and is intended to be called with arguments as if via `main(*sys.argv)`. Note that this includes the program name, `argv[0]`. The function has the attributes `parser` and `main`, which are the generated `ArgumentParser` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a `parse_args()` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling `sys.exit`, the `parse_args()` function will raise a `SystemExit` in the event of a parsing error or `-h/--help` argument.
 
 ```python
 @autocommand()
@@ -210,7 +251,7 @@ LOUD NOISES
 0
 ```
 
-### Features, notes, and limitations
+## Features, notes, and limitations
 
 - `--options` are given single character `-s`hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given `--long` versions.
 - `autocommand` supports a few other kwargs:
