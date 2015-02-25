@@ -183,7 +183,7 @@ You can also attach description text to individual parameters in the annotation.
 def copy_net(
     infile: 'The name of the file to send',
     host: 'The host to send the file to',
-    port: (int, 'The port to connect to'))
+    port: (int, 'The port to connect to')):
 
     '''
     Copy a file over raw TCP to a remote destination.
