@@ -15,7 +15,8 @@ from autocommand import autocommand
 def echo(thing)
     print(thing)
 ```
-```sh
+
+```
 $ python echo.py hello
 hello
 $ python echo.py -h
@@ -54,7 +55,8 @@ To create `--option` switches, just assign a default. Autocommand will automatic
 def do_with_config(argument, config='~/foo.conf'):
     pass
 ```
-```sh
+
+```
 $ python example.py -h
 usage: example.py [-h] [-c CONFIG] argument
 
@@ -73,7 +75,8 @@ The option's type is automatically deduced from the default, unless one is expli
 def http_connect(host, port=80):
     print('{}:{}'.format(host, port))
 ```
-```sh
+
+```
 $ python http.py -h
 usage: http.py [-h] [-p PORT] host
 
@@ -100,7 +103,8 @@ If an argument is given a default value of `True` or `False`, or given an explic
 def example(verbose=False, quiet=False):
     pass
 ```
-```sh
+
+```
 $ python example.py -h
 usage: example.py [-h] [-v] [-q]
 
@@ -128,7 +132,8 @@ def write_out(infile=sys.stdin):
             print(line.rstrip())
     # If a file was opened, it is closed here. If it was just stdin, it is untouched.
 ```
-``` sh
+
+```
 $ echo "Hello World!" | python write_out.py | tee hello.txt
 Hello World!
 $ python write_out.py --infile hello.txt
@@ -150,7 +155,8 @@ def copy(infile=sys.stdin, outfile=sys.stdout):
             for line in istr:
                 ostr.write(line)
 ```
-```sh
+
+```
 $ python copy.py -h
 usage: copy.py [-h] [-i INFILE] [-o OUTFILE]
 
@@ -209,7 +215,8 @@ def seq(stop, start=1, step=1):
     for i in range(start, stop + 1, step):
         yield i
 ```
-```sh
+
+```
 $ seq.py -h
 usage: seq.py [-h] [-s START] [-S STEP] stop
 
@@ -245,7 +252,9 @@ def test_prog(arg1, arg2: int, quiet=False, verbose=False):
 # Note that argv[0] must be included.
 print(test_prog('test', '-v', 'hello', '80'))
 ```
+
 ```
+$ python test_prog.py
 hello 80
 LOUD NOISES
 0
