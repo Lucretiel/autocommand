@@ -122,16 +122,16 @@ import sys
 
 # Write the contents of stdin, or a file, to stdout
 @autocommand(__name__)
-def write_to(infile=sys.stdin):
+def write_out(infile=sys.stdin):
     with smart_open(infile) as f:
         for line in f:
             print(line.rstrip())
     # If a file was opened, it is closed here. If it was just stdin, it is untouched.
 ```
 ``` sh
-$ echo "Hello World!" | python write_to.py | tee hello.txt
+$ echo "Hello World!" | python write_out.py | tee hello.txt
 Hello World!
-$ python write_to.py --infile hello.txt
+$ python write_out.py --infile hello.txt
 Hello World!
 ```
 
