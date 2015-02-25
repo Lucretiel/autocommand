@@ -95,6 +95,10 @@ usage: http.py [-h] [-p PORT] host
 http.py: error: argument -p/--port: invalid int value: 'blah'
 ```
 
+### `None`
+
+If an option is given a default value of `None`, it reads in a value as normal, but supplies `None` if the option isn't provided.
+
 ### Switches
 If an argument is given a default value of `True` or `False`, or given an explicit `bool` type, it becomes an option switch.
 
@@ -118,7 +122,7 @@ Autocommand attempts to do the "correct thing" in these cases- if the default is
 
 ### Files
 
-If the default value is a file object, such as `sys.stdout`, then Autocommand just looks for a string, for a file path. It doesn't do any special checking on the string, though (such as checking if the file exists)- it's better to let the client decide how to handle errors in this case. Instead, it provides a special context manager called `smart_open`, which behaves exactly like `open` if a filename or other openable type is provided, but also lets you use already open files:
+If the default value is a file object, such as `sys.stdout`, then Autocommand just looks for a string, for a file path. It doesn't do any special checking on the string, though (such as checking if the file exists); it's better to let the client decide how to handle errors in this case. Instead, it provides a special context manager called `smart_open`, which behaves exactly like `open` if a filename or other openable type is provided, but also lets you use already open files:
 
 ```python
 from autocommand import autocommand, smart_open
