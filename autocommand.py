@@ -225,7 +225,7 @@ def autocommand(
             return main(*function_args.args, **function_args.kwargs)
 
         # If we are running as a script/program, call main right away and exit.
-        if module == '__main__':
+        if module == '__main__' or module is True:
             from sys import exit, argv
             exit(main_wrapper(*argv))
 
@@ -255,8 +255,10 @@ def smart_open(filename_or_file, *args, **kwargs):
                 print("Some stuff", file=f)
                 # If it was a filename, f is closed at the end here.
     '''
-    if isinstance(filename_or_file, IOBase):
+    try:
+        file = open(filename_or_file, *args, **kwargs)
+    except TypeError:
         yield filename_or_file
     else:
-        with open(filename_or_file, *args, **kwargs) as f:
-            yield f
+        with file:
+            yield file
