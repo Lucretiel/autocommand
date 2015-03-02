@@ -71,7 +71,7 @@ def test_open_args(tmpdir):
     '''
     Test that smart_open can forward kwargs correctly to open.
     '''
-    file_path = str(tmpdir.join('test.rxr'))
+    file_path = str(tmpdir.join('test.txt'))
 
     with smart_open(file_path, mode='w') as file:
         file.write(HELLO_CONTENTS)
