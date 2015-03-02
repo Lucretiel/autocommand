@@ -371,8 +371,7 @@ Features, notes, and limitations
    autocommand.
 
    -  It isn't possible to have an optional positional argument (as
-      opposed to a ``--option``). POSIX and GNU think this is bad form
-      anyway.
+      opposed to a ``--option``). POSIX thinks this is bad form anyway.
    -  It isn't possible to have mutually exclusive arguments or options
    -  It isn't possible to have subcommands or subparsers, though I'm
       working on a few solutions involving classes or nested function
