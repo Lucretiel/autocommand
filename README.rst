@@ -13,7 +13,7 @@ Autocommand is installed via pip:
 
     $ pip install autocommand
 
-Basic
+Usage
 -----
 
 Autocommand turns a function into a command-line program. It converts
@@ -56,7 +56,7 @@ parsed and the function is executed. The program's return code is taken
 from the return value of the function, via ``sys.exit``.
 
 Types
------
+~~~~~
 
 You can use a type annotation to give an argument a type. Any type (or
 in fact any callable) that returns an object when given a string
@@ -72,7 +72,7 @@ do some basic argument validation as well.
         ...
 
 Options
--------
+~~~~~~~
 
 To create ``--option`` switches, just assign a default. Autocommand will
 automatically create ``--long`` and ``-s``\ hort switches.
@@ -124,13 +124,13 @@ is explicitly given in an annotation:
     http.py: error: argument -p/--port: invalid int value: 'blah'
 
 ``None``
-~~~~~~~~
+````````
 
 If an option is given a default value of ``None``, it reads in a value
 as normal, but supplies ``None`` if the option isn't provided.
 
 Switches
-~~~~~~~~
+````````
 
 If an argument is given a default value of ``True`` or ``False``, or
 given an explicit ``bool`` type, it becomes an option switch.
@@ -158,7 +158,7 @@ default is ``True``, then supplying the switch makes the argument
 while not supplying the switch makes the argument the default value.
 
 Files
-~~~~~
+`````
 
 If the default value is a file object, such as ``sys.stdout``, then
 Autocommand just looks for a string, for a file path. It doesn't do any
@@ -190,7 +190,7 @@ files:
     Hello World!
 
 Descriptions and docstrings
----------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The ``autocommand`` decorator accepts ``description`` and ``epilog``
 kwargs, corresponding to the
@@ -232,7 +232,7 @@ the ``ArgumentParser``
     Hello World
 
 Parameter descriptions
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 You can also attach description text to individual parameters in the
 annotation. To attach both a type and a description, supply them both in
@@ -252,7 +252,7 @@ any order in a tuple
         # Left as an exercise to the reader
 
 Decorators and wrappers
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Because ``autocommand`` is powered by ``inspect.signature``, it
 automatically follows wrapper chains created by ``@functools.wraps``.
@@ -385,4 +385,14 @@ Features, notes, and limitations
       working on a few solutions involving classes or nested function
       definitions to allow this.
 
+Development
+-----------
+
+Autocommand cannot be important from the project root; this is to enforce separation of concerns and prevent accidental importing of `setup.py` or tests. To develop, install the project in editable mode:
+
+::
+
+    $ python setup.py develop
+
+This will create a link to the source files in the deployment directory, so that any source changes are reflected when it is imported.
 
