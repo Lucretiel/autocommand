@@ -74,7 +74,7 @@ do some basic argument validation as well.
 Trailing Arguments
 ~~~~~~~~~~~~~~~~~~
 
-You can add a `*args` parameter to your function to give it trailing arguments. The command will collect 0 or more trailing arguments and supply them to `args` as a tuple. If a type annotation is supplied, the type is applied to each argument.
+You can add a ``*args`` parameter to your function to give it trailing arguments. The command will collect 0 or more trailing arguments and supply them to `args` as a tuple. If a type annotation is supplied, the type is applied to each argument.
 
 .. code:: python
 
