@@ -39,6 +39,7 @@ def test_path(hello_filepath):
     with smart_open(hello_filepath) as file:
         contents = file.read()
         assert contents == HELLO_CONTENTS
+        assert file.closed is False
 
     assert file.closed is True
 
