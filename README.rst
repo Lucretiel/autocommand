@@ -192,14 +192,7 @@ files:
 Descriptions and docstrings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``autocommand`` decorator accepts ``description`` and ``epilog``
-kwargs, corresponding to the
-` ``description`` <https://docs.python.org/3/library/argparse.html#description>`_
-and
-` ``epilog`` <https://docs.python.org/3/library/argparse.html#epilog>`_
-of the ``ArgumentParser``. If no description is given, but the decorated
-function has a docstring, then it is taken as the ``description`` for
-the ``ArgumentParser``
+The ``autocommand`` decorator accepts ``description`` and ``epilog`` kwargs, corresponding to the `description <https://docs.python.org/3/library/argparse.html#description>`_ and `epilog <https://docs.python.org/3/library/argparse.html#epilog>`_ of the ``ArgumentParser``. If no description is given, but the decorated function has a docstring, then it is taken as the ``description`` for the ``ArgumentParser``
 
 .. code:: python
 
