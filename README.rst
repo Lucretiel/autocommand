@@ -123,8 +123,8 @@ is explicitly given in an annotation:
     usage: http.py [-h] [-p PORT] host
     http.py: error: argument -p/--port: invalid int value: 'blah'
 
-``None``
-````````
+None
+````
 
 If an option is given a default value of ``None``, it reads in a value
 as normal, but supplies ``None`` if the option isn't provided.
