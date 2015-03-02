@@ -10,6 +10,7 @@ Installation
 Autocommand is installed via pip:
 
 ::
+
     $ pip install autocommand
 
 Basic
