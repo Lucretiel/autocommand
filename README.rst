@@ -4,6 +4,14 @@ autocommand
 A library to automatically generate and run simple argparse parsers from
 function signatures.
 
+Installation
+------------
+
+Autocommand is installed via pip:
+
+::
+    $ pip install autocommand
+
 Basic
 -----
 
@@ -185,9 +193,9 @@ Descriptions and docstrings
 
 The ``autocommand`` decorator accepts ``description`` and ``epilog``
 kwargs, corresponding to the
-```description`` <https://docs.python.org/3/library/argparse.html#description>`__
+` ``description`` <https://docs.python.org/3/library/argparse.html#description>`_
 and
-```epilog`` <https://docs.python.org/3/library/argparse.html#epilog>`__
+` ``epilog`` <https://docs.python.org/3/library/argparse.html#epilog>`_
 of the ``ArgumentParser``. If no description is given, but the decorated
 function has a docstring, then it is taken as the ``description`` for
 the ``ArgumentParser``
