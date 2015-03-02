@@ -15,21 +15,34 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = '0.9.3'
-
 from inspect import signature, Parameter, getdoc
 from argparse import ArgumentParser, _StoreConstAction
 from contextlib import contextmanager
 from io import IOBase
 
 
+__version__ = '0.9.5'
+
+
 _empty = Parameter.empty
 
 
-class AutocommandError(TypeError): pass
-class AnnotationError(AutocommandError): pass
-class PositionalArgError(AutocommandError): pass
-class KWArgError(AutocommandError): pass
+class AutocommandError(TypeError):
+    '''Base class for autocommand exceptions'''
+
+
+class AnnotationError(AutocommandError):
+    '''Annotation error: annotation must be a string, type, or tuple of both'''
+
+
+class PositionalArgError(AutocommandError):
+    '''
+    Postional Arg Error: autocommand can't handle postional-only parameters
+    '''
+
+
+class KWArgError(AutocommandError):
+    '''kwarg Error: autocommand can't handle a **kwargs parameter'''
 
 
 def _get_type_description(annotation):
@@ -144,11 +157,11 @@ def _make_argument(param, used_char_args):
 
 
 def autocommand(
-    module=None, *,
-    description=None,
-    epilog=None,
-    add_nos=False,
-    parser=None):
+        module=None, *,
+        description=None,
+        epilog=None,
+        add_nos=False,
+        parser=None):
     '''
     Decorator to create an autocommand function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
@@ -196,7 +209,8 @@ def autocommand(
             # present, so that they get priority, and don't have to get --long
             # versions. sorted is stable, so the parameters will still be in
             # relative order
-            for param in sorted(main_sig.parameters.values(),
+            for param in sorted(
+                    main_sig.parameters.values(),
                     key=lambda param: len(param.name) > 1):
                 flags, spec = _make_argument(param, used_char_args)
                 action = local_parser.add_argument(*flags, **spec)
@@ -221,8 +235,8 @@ def autocommand(
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
-            function_args = main_sig.bind_partial()
-            function_args.arguments.update(vars(local_parser.parse_args(argv[1:])))
+            func_args = main_sig.bind_partial()
+            func_args.arguments.update(vars(local_parser.parse_args(argv[1:])))
 
             return main(*function_args.args, **function_args.kwargs)
 

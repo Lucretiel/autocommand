@@ -1,12 +1,13 @@
 from setuptools import setup
 
+
 def getfile(filename):
     with open(filename) as file:
         return file.read()
 
 setup(
     name='autocommand',
-    version='0.9.3',
+    version='0.9.5',
     py_modules=['autocommand'],
     package_dir={'': 'src'},
     platforms='any',
