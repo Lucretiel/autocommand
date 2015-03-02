@@ -71,6 +71,32 @@ do some basic argument validation as well.
     def net_client(host, port: int):
         ...
 
+Trailing Arguments
+~~~~~~~~~~~~~~~~~~
+
+You can add a `*args` parameter to your function to give it trailing arguments. The command will collect 0 or more trailing arguments and supply them to `args` as a tuple. If a type annotation is supplied, the type is applied to each argument.
+
+.. code:: python
+
+    @autocommand(__name__)
+    def cat(*files):
+        '''Write the contents of each file, one by one.'''
+        for filename in files:
+            with open(filename) as file:
+                for line in file:
+                    print(line.rstrip())
+
+::
+
+    $ python cat.py -h
+    usage: ipython [-h] [file [file ...]]
+
+    positional arguments:
+      file
+    
+    optional arguments:
+      -h, --help  show this help message and exit
+
 Options
 ~~~~~~~
 
@@ -349,9 +375,6 @@ Features, notes, and limitations
       in the parameter list, a ``--no-switch`` is added, to cancel it
       out.
 
--  If the decorated function has a ``*args``, then 0 or more arguments
-   are collected into a list. No default value can be given, but a type
-   and/or description annotation may.
 -  There are a few possible exceptions that ``autocommand`` can raise.
    All of them derive from ``autocommand.AutocommandError``, which is a
    ``TypeError``.
