@@ -156,6 +156,39 @@ def _make_argument(param, used_char_args):
     return flags, arg_spec
 
 
+def _make_parser(main_sig, description, epilog, add_nos):
+    '''
+    Given the signature of a function, create an ArgumentParser
+    '''
+    parser = ArgumentParser(description=description, epilog=epilog)
+
+    used_char_args = {'h'}
+    # Add each argument. Do single-character arguments first, if
+    # present, so that they get priority, and don't have to get --long
+    # versions. sorted is stable, so the parameters will still be in
+    # relative order
+    for param in sorted(
+            main_sig.parameters.values(),
+            key=lambda param: len(param.name) > 1):
+        flags, spec = _make_argument(param, used_char_args)
+        action = local_parser.add_argument(*flags, **spec)
+
+        # If requested, add --no- option counterparts. Because the
+        # option/argument names can't have a hyphen character, these
+        # shouldn't conflict with any existing options.
+        # TODO: decide if it's better, stylistically, to do these at
+        # the end, AFTER all of the parameters.
+        if add_nos and isinstance(action, _StoreConstAction):
+            local_parser.add_argument(
+                '--no-{}'.format(action.dest),
+                action='store_const',
+                dest=action.dest,
+                const=action.default)
+                # No need for a default=, as the first action takes
+                # precedence.
+    return parser
+
+
 def autocommand(
         module=None, *,
         description=None,
@@ -196,38 +229,8 @@ def autocommand(
     '''
     def decorator(main):
         main_sig = signature(main)
-
-        if parser is not None:
-            local_parser = parser
-        else:
-            local_parser = ArgumentParser(
-                description=description or getdoc(main),
-                epilog=epilog)
-
-            used_char_args = {'h'}
-            # Add each argument. Do single-character arguments first, if
-            # present, so that they get priority, and don't have to get --long
-            # versions. sorted is stable, so the parameters will still be in
-            # relative order
-            for param in sorted(
-                    main_sig.parameters.values(),
-                    key=lambda param: len(param.name) > 1):
-                flags, spec = _make_argument(param, used_char_args)
-                action = local_parser.add_argument(*flags, **spec)
-
-                # If requested, add --no- option counterparts. Because the
-                # option/argument names can't have a hyphen character, these
-                # shouldn't conflict with any existing options.
-                # TODO: decide if it's better, stylistically, to do these at
-                # the end, AFTER all of the parameters.
-                if add_nos and isinstance(action, _StoreConstAction):
-                    local_parser.add_argument(
-                        '--no-{}'.format(action.dest),
-                        action='store_const',
-                        dest=action.dest,
-                        const=action.default)
-                    # No need for a default=, as the first action takes
-                    # precedence.
+        loc_parser = parser or _make_parser(
+            main_sig, description or getdoc(main), epilog, add_nos)
 
         def main_wrapper(*argv):
             local_parser.prog = argv[0]
