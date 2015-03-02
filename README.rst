@@ -78,9 +78,9 @@ You can add a ``*args`` parameter to your function to give it trailing arguments
 
 .. code:: python
 
+    #Write the contents of each file, one by one
     @autocommand(__name__)
     def cat(*files):
-        '''Write the contents of each file, one by one.'''
         for filename in files:
             with open(filename) as file:
                 for line in file:
