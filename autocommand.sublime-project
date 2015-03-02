@@ -1,0 +1,14 @@
+{
+	"folders":
+	[
+		{
+			"folder_exclude_patterns":
+			[
+				"dist",
+				"build"
+			],
+			"follow_symlinks": true,
+			"path": "."
+		}
+	]
+}
