@@ -20,15 +20,6 @@ def hello_filepath(tmpdir):
     file_path.remove()
 
 
-@yield_fixture
-def hello_file(hello_filepath):
-    '''
-    Returns an opened file as from hello_filepath
-    '''
-    with open(hello_filepath) as file:
-        yield file
-
-
 def test_path(hello_filepath):
     '''
     Test smart_open with a file path. It the file should be opened, then closed
@@ -43,20 +34,21 @@ def test_path(hello_filepath):
     assert file.closed is True
 
 
-def test_file(hello_file):
+def test_file(hello_filepath):
     '''
     Test smart_open with an open file object. The file object should be directly
     passed to the with context, and not be closed at the end.
     '''
-    assert isinstance(hello_file, IOBase)
-    assert hello_file.closed is False
-
-    with smart_open(hello_file) as file:
-        contents = file.read()
-        assert contents == HELLO_CONTENTS
-        assert file is hello_file
-
-    assert file.closed is False
+    with open(hello_filepath) as hello_file:
+        assert isinstance(hello_file, IOBase)
+        assert hello_file.closed is False
+    
+        with smart_open(hello_file) as file:
+            contents = file.read()
+            assert contents == HELLO_CONTENTS
+            assert file is hello_file
+    
+        assert file.closed is False
 
 
 def test_nonexistent(tmpdir):
