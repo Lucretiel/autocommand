@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
-__version__ = '0.9.0'
+__version__ = '0.9.3'
 
 from inspect import signature, Parameter, getdoc
 from argparse import ArgumentParser, _StoreConstAction
