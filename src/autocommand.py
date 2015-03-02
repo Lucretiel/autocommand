@@ -269,11 +269,11 @@ def smart_open(filename_or_file, *args, **kwargs):
     '''
     This context manager allows you to open a filename, if you want to default
     some already-existing file object, like sys.stdout, which shouldn't be
-    closed at the end of the context. If the filename argument is a str, bytes,
-    or int, the file object is created via a call to open with the given *args
-    and **kwargs, sent to the context, and closed at the end of the context,
-    just like "with open(filename) as f:". If it isn't one of the openable
-    types, the object simply sent to the context unchanged. Example:
+    closed at the end of the context. If the filename argument is a file object
+    it is sent to the context unchanged; otherwise, it is opened with the given
+    *args and **kwargs, sent to the context, and closed at the end of the
+    context, just like "with open(filename) as f:". For consistency, the object
+    is flushed in the former case. Example:
 
         def work_with_file(name=sys.stdout):
             with smart_open(name) as f:
@@ -281,10 +281,9 @@ def smart_open(filename_or_file, *args, **kwargs):
                 print("Some stuff", file=f)
                 # If it was a filename, f is closed at the end here.
     '''
-    try:
-        file = open(filename_or_file, *args, **kwargs)
-    except TypeError:
+    if isinstance(filename_or_file, IOBase):
         yield filename_or_file
+        filename_or_file.flush()
     else:
-        with file:
+        with open(filename_or_file, *args, **kwargs) as file:
             yield file
