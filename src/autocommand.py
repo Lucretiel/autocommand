@@ -171,7 +171,7 @@ def _make_parser(main_sig, description, epilog, add_nos):
             main_sig.parameters.values(),
             key=lambda param: len(param.name) > 1):
         flags, spec = _make_argument(param, used_char_args)
-        action = local_parser.add_argument(*flags, **spec)
+        action = parser.add_argument(*flags, **spec)
 
         # If requested, add --no- option counterparts. Because the
         # option/argument names can't have a hyphen character, these
@@ -179,7 +179,7 @@ def _make_parser(main_sig, description, epilog, add_nos):
         # TODO: decide if it's better, stylistically, to do these at
         # the end, AFTER all of the parameters.
         if add_nos and isinstance(action, _StoreConstAction):
-            local_parser.add_argument(
+            parser.add_argument(
                 '--no-{}'.format(action.dest),
                 action='store_const',
                 dest=action.dest,
@@ -229,7 +229,7 @@ def autocommand(
     '''
     def decorator(main):
         main_sig = signature(main)
-        loc_parser = parser or _make_parser(
+        local_parser = parser or _make_parser(
             main_sig, description or getdoc(main), epilog, add_nos)
 
         def main_wrapper(*argv):
