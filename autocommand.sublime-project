@@ -2,10 +2,17 @@
 	"folders":
 	[
 		{
+			"file_exclude_patterns":
+			[
+				".coverage"
+			],
 			"folder_exclude_patterns":
 			[
 				"dist",
-				"build"
+				"build",
+				".env",
+				"__pycache__",
+				"*.egg-info"
 			],
 			"follow_symlinks": true,
 			"path": "."
