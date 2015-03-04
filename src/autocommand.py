@@ -227,21 +227,30 @@ def autocommand(
     The decorated function is attached to the result as the `main` attribute,
     and the parser is attached as the `parser` attribute.
     '''
+
+    # If @autocommand is used instead of @autocommand(__name__)
+    if callable(module):
+        return autocommand(None,
+            description=description,
+            epilog=epilog,
+            add_nos=add_nos,
+            parser=parser) (module)
+
     def decorator(main):
         main_sig = signature(main)
         local_parser = parser or _make_parser(
             main_sig, description or getdoc(main), epilog, add_nos)
 
-        def main_wrapper(*argv):
-            local_parser.prog = argv[0]
+        def main_wrapper(prog_name, *argv):
+            local_parser.prog = prog_name
 
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
             func_args = main_sig.bind_partial()
-            func_args.arguments.update(vars(local_parser.parse_args(argv[1:])))
+            func_args.arguments.update(vars(local_parser.parse_args(argv)))
 
-            return main(*function_args.args, **function_args.kwargs)
+            return main(*func_args.args, **func_args.kwargs)
 
         # If we are running as a script/program, call main right away and exit.
         if module == '__main__' or module is True:
