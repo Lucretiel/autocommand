@@ -1,8 +1,7 @@
 autocommand
 ===========
 
-A library to automatically generate and run simple argparse parsers from
-function signatures.
+A library to automatically generate and run simple argparse parsers from function signatures.
 
 Installation
 ------------
@@ -16,10 +15,7 @@ Autocommand is installed via pip:
 Usage
 -----
 
-Autocommand turns a function into a command-line program. It converts
-the function's parameter signature into command-line arguments, and
-automatically runs the function if the module was called as
-``__main__``. In effect, it lets your create a smart main function.
+Autocommand turns a function into a command-line program. It converts the function's parameter signature into command-line arguments, and automatically runs the function if the module was called as ``__main__``. In effect, it lets your create a smart main function.
 
 .. code:: python
 
@@ -46,30 +42,20 @@ automatically runs the function if the module was called as
     usage: echo.py [-h] thing
     echo.py: error: unrecognized arguments: world
 
-As you can see, autocommand uses argparse to convert the signature of
-the function into an argument spec, which automatically handles creating
-a usage statement and argument parsing.
-
-``autocommand`` is passed ``__name__`` to allow it to automatically run
-the decorated function. If ``__name__ == '__main__'``, the arguments are
-parsed and the function is executed. The program's return code is taken
-from the return value of the function, via ``sys.exit``.
+As you can see, autocommand converts the signature of the function into an argument spec. When you run the file as a program, autocommand collects the command-line arguments and turns them into function arguments. The function is executed with these arguments, and then the program exits with the return value of the function, via ``sys.exit``. Autocommand also automatically creates a usage message, which can be invoked with ``-h`` or ``--help``, and automatically prints an error message when provided with invalid arguments.
 
 Types
 ~~~~~
 
-You can use a type annotation to give an argument a type. Any type (or
-in fact any callable) that returns an object when given a string
-argument can be used, though there are a few special cases that are
-described later. Keep in mind that ``argparse`` will catch
-``TypeErrors`` raised during parsing, so you can supply a callable and
-do some basic argument validation as well.
+You can use a type annotation to give an argument a type. Any type (or in fact any callable) that returns an object when given a string argument can be used, though there are a few special cases that are described later.
 
 .. code:: python
 
     @autocommand(__name__)
     def net_client(host, port: int):
         ...
+
+Autocommand will catch ``TypeErrors`` raised by the type during argument parsing, so you can supply a callable and do some basic argument validation as well.
 
 Trailing Arguments
 ~~~~~~~~~~~~~~~~~~
@@ -93,15 +79,14 @@ You can add a ``*args`` parameter to your function to give it trailing arguments
 
     positional arguments:
       file
-    
+
     optional arguments:
       -h, --help  show this help message and exit
 
 Options
 ~~~~~~~
 
-To create ``--option`` switches, just assign a default. Autocommand will
-automatically create ``--long`` and ``-s``\ hort switches.
+To create ``--option`` switches, just assign a default. Autocommand will automatically create ``--long`` and ``-s``\ hort switches.
 
 .. code:: python
 
@@ -121,8 +106,7 @@ automatically create ``--long`` and ``-s``\ hort switches.
       -h, --help            show this help message and exit
       -c CONFIG, --config CONFIG
 
-The option's type is automatically deduced from the default, unless one
-is explicitly given in an annotation:
+The option's type is automatically deduced from the default, unless one is explicitly given in an annotation:
 
 .. code:: python
 
@@ -152,8 +136,7 @@ is explicitly given in an annotation:
 None
 ````
 
-If an option is given a default value of ``None``, it reads in a value
-as normal, but supplies ``None`` if the option isn't provided.
+If an option is given a default value of ``None``, it reads in a value as normal, but supplies ``None`` if the option isn't provided.
 
 Switches
 ````````
@@ -177,23 +160,12 @@ given an explicit ``bool`` type, it becomes an option switch.
       -v, --verbose
       -q, --quiet
 
-Autocommand attempts to do the "correct thing" in these cases- if the
-default is ``True``, then supplying the switch makes the argument
-``False``; if the type is ``bool`` and the default is some other
-``True`` value, then supplying the switch makes the argument ``False``,
-while not supplying the switch makes the argument the default value.
+Autocommand attempts to do the "correct thing" in these cases- if the default is ``True``, then supplying the switch makes the argument ``False``; if the type is ``bool`` and the default is some other ``True`` value, then supplying the switch makes the argument ``False``, while not supplying the switch makes the argument the default value.
 
 Files
 `````
 
-If the default value is a file object, such as ``sys.stdout``, then
-Autocommand just looks for a string, for a file path. It doesn't do any
-special checking on the string, though (such as checking if the file
-exists); it's better to let the client decide how to handle errors in
-this case. Instead, it provides a special context manager called
-``smart_open``, which behaves exactly like ``open`` if a filename or
-other openable type is provided, but also lets you use already open
-files:
+If the default value is a file object, such as ``sys.stdout``, then autocommand just looks for a string, for a file path. It doesn't do any special checking on the string, though (such as checking if the file exists); it's better to let the client decide how to handle errors in this case. Instead, it provides a special context manager called ``smart_open``, which behaves exactly like ``open`` if a filename or other openable type is provided, but also lets you use already open files:
 
 .. code:: python
 
@@ -253,9 +225,7 @@ The ``autocommand`` decorator accepts ``description`` and ``epilog`` kwargs, cor
 Parameter descriptions
 ~~~~~~~~~~~~~~~~~~~~~~
 
-You can also attach description text to individual parameters in the
-annotation. To attach both a type and a description, supply them both in
-any order in a tuple
+You can also attach description text to individual parameters in the annotation. To attach both a type and a description, supply them both in any order in a tuple
 
 .. code:: python
 
@@ -273,9 +243,7 @@ any order in a tuple
 Decorators and wrappers
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-Because ``autocommand`` is powered by ``inspect.signature``, it
-automatically follows wrapper chains created by ``@functools.wraps``.
-For example:
+Autocommand automatically follows wrapper chains created by ``@functools.wraps``. This means that you can apply other wrapping decorators to your main function, and autocommand will still correctly detect the signature.
 
 .. code:: python
 
@@ -283,7 +251,9 @@ For example:
     from autocommand import autocommand
 
     def print_yielded(func):
-        '''Convert a generator into a function that prints all yielded elements'''
+        '''
+        Convert a generator into a function that prints all yielded elements
+        '''
         @wraps(func)
         def wrapper(*args, **kwargs):
             for thing in func(*args, **kwargs):
@@ -315,27 +285,12 @@ For example:
 
     STOP and STEP default to 1
 
-Even though autocommand is being applied to the ``wrapper`` returned by
-``print_yielded``, it still retreives the signature of the underlying
-``seq`` function to create the argument parsing.
+Even though autocommand is being applied to the ``wrapper`` returned by ``print_yielded``, it still retreives the signature of the underlying ``seq`` function to create the argument parsing.
 
 Testing and Library use
 -----------------------
 
-The decorated function is only called and exited from if the first
-argument to ``autocommand`` is ``'__main__'`` or ``True``. If it is
-neither of these values, or no argument is given, then a new main
-function is created by the decorator. This function has the signature
-``main(*argv)``, and is intended to be called with arguments as if via
-``main(*sys.argv)``. Note that this includes the program name,
-``argv[0]``. The function has the attributes ``parser`` and ``main``,
-which are the generated ``ArgumentParser`` and the original main
-function that was decorated. This is to facilitate testing and library
-use of your main. Calling the function triggers a ``parse_args()`` with
-the supplied arguments, and returns the result of the main function.
-Note that, while it returns instead of calling ``sys.exit``, the
-``parse_args()`` function will raise a ``SystemExit`` in the event of a
-parsing error or ``-h/--help`` argument.
+The decorated function is only called and exited from if the first argument to ``autocommand`` is ``'__main__'`` or ``True``. If it is neither of these values, or no argument is given, then a new main function is created by the decorator. This function has the signature ``main(*argv)``, and is intended to be called with arguments as if via ``main(*sys.argv)``. Note that this includes the program name, ``argv[0]``. The function has the attributes ``parser`` and ``main``, which are the generated ``ArgumentParser`` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a ``parse_args()`` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling ``sys.exit``, the ``parse_args()`` function will raise a ``SystemExit`` in the event of a parsing error or ``-h/--help`` argument.
 
 .. code:: python
 
@@ -345,7 +300,7 @@ parsing error or ``-h/--help`` argument.
             print(arg1, arg2)
             if verbose:
                 print("LOUD NOISES")
-        
+
         return 0
 
     # Note that argv[0] must be included.
@@ -361,44 +316,23 @@ parsing error or ``-h/--help`` argument.
 Features, notes, and limitations
 --------------------------------
 
--  ``--options`` are given single character ``-s``\ hort options as
-   well, if possible. Each capitalization of the first letter in the
-   parameter name is tried. If any parameters have only a single letter
-   name, they aren't given ``--long`` versions.
--  ``autocommand`` supports a few other kwargs:
+- ``--options`` are given single character ``-s``\ hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given ``--long`` versions.
+- ``autocommand`` supports a few other kwargs:
 
-   -  If a ``parser`` is given, that parser object is used instead of
-      one being generated on from the function signature. This allows
-      you to use a more elaborate parser, with features that aren't
-      supported by the automation system in ``autocommand``.
-   -  If ``add_nos`` is set to True, then for each boolean ``--switch``
-      in the parameter list, a ``--no-switch`` is added, to cancel it
-      out.
+   - If a ``parser`` is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in ``autocommand``.
+   - If ``add_nos`` is set to True, then for each boolean ``--switch`` in the parameter list, a ``--no-switch`` is added, to cancel it out.
 
--  There are a few possible exceptions that ``autocommand`` can raise.
-   All of them derive from ``autocommand.AutocommandError``, which is a
-   ``TypeError``.
+- There are a few possible exceptions that ``autocommand`` can raise. All of them derive from ``autocommand.AutocommandError``, which is a ``TypeError``.
 
-   -  If an invalid annotation is given (that is, it isn't a ``type``,
-      ``str``, ``(type, str)``, or ``(str, type)``, an
-      ``AnnotationError`` is raised
-   -  If the function has a ``**kwargs`` parameter, a ``KWargError`` is
-      raised.
-   -  If, somehow, the function has a positional-only parameter, a
-      ``PositionalArgError`` is raised. This means that the argument
-      doesn't have a name, which is currently not possible with a plain
-      ``def`` or ``lambda``, though many built-in functions have this
-      kind of parameter.
+    - If an invalid annotation is given (that is, it isn't a ``type``, ``str``, ``(type, str)``, or ``(str, type)``, an ``AnnotationError`` is raised
+    - If the function has a ``**kwargs`` parameter, a ``KWargError`` is raised.
+    - If, somehow, the function has a positional-only parameter, a ``PositionalArgError`` is raised. This means that the argument doesn't have a name, which is currently not possible with a plain ``def`` or ``lambda``, though many built-in functions have this kind of parameter.
 
--  There are a few argparse features that are not supported by
-   autocommand.
+- There are a few argparse features that are not supported by autocommand.
 
-   -  It isn't possible to have an optional positional argument (as
-      opposed to a ``--option``). POSIX thinks this is bad form anyway.
-   -  It isn't possible to have mutually exclusive arguments or options
-   -  It isn't possible to have subcommands or subparsers, though I'm
-      working on a few solutions involving classes or nested function
-      definitions to allow this.
+    - It isn't possible to have an optional positional argument (as opposed to a ``--option``). POSIX thinks this is bad form anyway.
+    - It isn't possible to have mutually exclusive arguments or options
+    - It isn't possible to have subcommands or subparsers, though I'm working on a few solutions involving classes or nested function definitions to allow this.
 
 Development
 -----------
