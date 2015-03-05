@@ -319,20 +319,20 @@ Features, notes, and limitations
 - ``--options`` are given single character ``-s``\ hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given ``--long`` versions.
 - ``autocommand`` supports a few other kwargs:
 
-   - If a ``parser`` is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in ``autocommand``.
-   - If ``add_nos`` is set to True, then for each boolean ``--switch`` in the parameter list, a ``--no-switch`` is added, to cancel it out.
+  - If a ``parser`` is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in ``autocommand``.
+  - If ``add_nos`` is set to True, then for each boolean ``--switch`` in the parameter list, a ``--no-switch`` is added, to cancel it out.
 
 - There are a few possible exceptions that ``autocommand`` can raise. All of them derive from ``autocommand.AutocommandError``, which is a ``TypeError``.
 
-    - If an invalid annotation is given (that is, it isn't a ``type``, ``str``, ``(type, str)``, or ``(str, type)``, an ``AnnotationError`` is raised
-    - If the function has a ``**kwargs`` parameter, a ``KWargError`` is raised.
-    - If, somehow, the function has a positional-only parameter, a ``PositionalArgError`` is raised. This means that the argument doesn't have a name, which is currently not possible with a plain ``def`` or ``lambda``, though many built-in functions have this kind of parameter.
+  - If an invalid annotation is given (that is, it isn't a ``type``, ``str``, ``(type, str)``, or ``(str, type)``, an ``AnnotationError`` is raised
+  - If the function has a ``**kwargs`` parameter, a ``KWargError`` is raised.
+  - If, somehow, the function has a positional-only parameter, a ``PositionalArgError`` is raised. This means that the argument doesn't have a name, which is currently not possible with a plain ``def`` or ``lambda``, though many built-in functions have this kind of parameter.
 
 - There are a few argparse features that are not supported by autocommand.
 
-    - It isn't possible to have an optional positional argument (as opposed to a ``--option``). POSIX thinks this is bad form anyway.
-    - It isn't possible to have mutually exclusive arguments or options
-    - It isn't possible to have subcommands or subparsers, though I'm working on a few solutions involving classes or nested function definitions to allow this.
+  - It isn't possible to have an optional positional argument (as opposed to a ``--option``). POSIX thinks this is bad form anyway.
+  - It isn't possible to have mutually exclusive arguments or options
+  - It isn't possible to have subcommands or subparsers, though I'm working on a few solutions involving classes or nested function definitions to allow this.
 
 Development
 -----------
