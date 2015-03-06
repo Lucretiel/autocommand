@@ -1,82 +1,56 @@
-from io import IOBase
-from sys import stdout
-
-from pytest import yield_fixture, raises
 from autocommand import smart_open
+from pytest import raises, fixture, yield_fixture
+from unittest.mock import patch, MagicMock
+from io import IOBase
 
 
-HELLO_CONTENTS = "Hello, World!\n"
+def mockfile():
+    return MagicMock(IOBase)
 
 
-@yield_fixture
-def hello_filepath(tmpdir):
-    '''
-    Create a file called 'hello.txt' in tmpdir. This file has the contents
-    "Hello, World!\\n". The fixture returns the path to the file as a string.
-    '''
-    file_path = tmpdir.join("hello.txt")
-    file_path.write(HELLO_CONTENTS)
-    yield str(file_path)
-    file_path.remove()
+def patch_open(*args, **kwargs):
+    return patch('builtins.open', *args, return_value=mockfile(), **kwargs)
 
 
-@yield_fixture
-def hello_file(hello_filepath):
-    '''
-    Returns an opened file as from hello_filepath
-    '''
-    with open(hello_filepath) as file:
-        yield file
-
-
-def test_path(hello_filepath):
+def test_path():
     '''
     Test smart_open with a file path. It the file should be opened, then closed
     at the end of the context.
     '''
-    assert isinstance(hello_filepath, str)
+    with patch_open() as mock_open:
+        with smart_open('/path/to/file') as file:
+            file.readline()
 
-    with smart_open(hello_filepath) as file:
-        contents = file.read()
-        assert contents == HELLO_CONTENTS
-        assert file.closed is False
-
-    assert file.closed is True
+    mock_open.assert_called_once_with('/path/to/file')
+    file.__enter__.assert_called_once_with()
+    file.readline.assert_called_once_with()
+    file.__exit__.assert_called_once_with(None, None, None)
 
 
-def test_file(hello_file):
+def test_file():
     '''
-    Test smart_open with an open file object. The file object should be directly
-    passed to the with context, and not be closed at the end.
+    Test smart_open with NOT a file path. The input object should be returned,
+    and no context methods should be called on it
     '''
-    assert isinstance(hello_file, IOBase)
-    assert hello_file.closed is False
+    fakefile = mockfile()
+    # For some reason open(MagicMock()) doesn't throw, so we have to mock open
 
-    with smart_open(hello_file) as file:
-        contents = file.read()
-        assert contents == HELLO_CONTENTS
-        assert file is hello_file
+    with patch_open(side_effect=TypeError):
+        with smart_open(fakefile) as file:
+            file.readline()
 
-    assert file.closed is False
+    assert file is fakefile
+    assert not file.__enter__.called
+    file.readline.assert_called_once_with()
+    assert not file.__enter__.called
 
-
-def test_nonexistent(tmpdir):
-    '''
-    Test that smart_open still raises exceptions, just like the open builtin.
-    '''
-    with raises(FileNotFoundError):
-        with smart_open(str(tmpdir.join('goodbye.txt'))) as file:
-            pass
 
 def test_open_args(tmpdir):
     '''
     Test that smart_open can forward kwargs correctly to open.
     '''
-    file_path = str(tmpdir.join('test.txt'))
+    with patch_open() as mock_open:
+        with smart_open('/path/to/file', 'w', encoding='utf8') as file:
+            pass
 
-    with smart_open(file_path, mode='w') as file:
-        file.write(HELLO_CONTENTS)
-
-    with smart_open(file_path) as file:
-        contents = file.read()
-        assert contents == HELLO_CONTENTS
+    mock_open.assert_called_once_with('/path/to/file', 'w', encoding='utf8')
