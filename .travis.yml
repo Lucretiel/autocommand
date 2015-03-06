@@ -7,4 +7,8 @@ install:
   - pip install -e .
   - pip install coverage pytest-cov
 
-script: sh -x util/test.sh
+script:
+  - sh -x util/test.sh
+
+after_success:
+  - coveralls
