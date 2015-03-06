@@ -3,6 +3,7 @@ from inspect import Parameter, Signature
 from unittest.mock import patch
 from pytest import raises, mark
 
+# Note: The (int, 1) case is to provide 100% branch coverage
 @mark.parametrize('annotation',
     [1, (int, 1)])
 def test_annotation_error(annotation):
