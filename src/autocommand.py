@@ -200,7 +200,7 @@ def autocommand(
     analyzed, and an ArgumentParser is created, using the `description` and
     `epilog` parameters, to parse command line arguments corrosponding to the
     function's parameters. The function's signature is changed to accept *argv
-    parameters, as from `sys.argv`, though you can supply your own. When
+    parameters, as from `sys.argv[1:]`, though you can supply your own. When
     called, the function parses the arguments provided, then supplies them to
     the decorated function. Keep in mind that this happens with plain argparse,
     so supplying invalid arguments or '-h' will cause a usage statement to be
@@ -212,9 +212,9 @@ def autocommand(
     return value; this is so that you can call `@autocommand(__name__)` and
     still be able to import the module for testing.
 
-    If no argparse description is given, it defaults to the decorated
-    functions's docstring, if present. Additionally, the parser's `prog` is set
-    to `argv[0]` when the wrapped main is called.
+    The `desctiption` and `epilog` parameters corrospond to the same respective
+    argparse parameters. If no description is given, it defaults to the
+    decorated functions's docstring, if present.
 
     If add_nos is True, every boolean option will have a --no- version created
     as well, which inverts the option. For instance, the --verbose option will
@@ -241,9 +241,7 @@ def autocommand(
         local_parser = parser or _make_parser(
             main_sig, description or getdoc(main), epilog, add_nos)
 
-        def main_wrapper(prog_name, *argv):
-            local_parser.prog = prog_name
-
+        def main_wrapper(*argv):
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
@@ -255,7 +253,7 @@ def autocommand(
         # If we are running as a script/program, call main right away and exit.
         if module == '__main__' or module is True:
             from sys import exit, argv
-            exit(main_wrapper(*argv))
+            exit(main_wrapper(*argv[1:]))
 
         # Otherwise, attach the wrapped main function and parser, and return
         # the wrapper.
