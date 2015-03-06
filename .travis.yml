@@ -5,7 +5,7 @@ python:
 
 install:
   - pip install -e .
-  - pip install coverage pytest-cov
+  - pip install coverage pytest-cov coveralls
 
 script:
   - sh -x util/test.sh
