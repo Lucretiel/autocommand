@@ -109,7 +109,7 @@ def _make_argument(param, used_char_args):
             is_option = True
 
         # Special case for file types: make it a string type, for filename
-        elif issubclass(arg_type, IOBase):
+        elif isinstance(default, IOBase):
             arg_spec['type'] = str
 
         # TODO: special case for list type.
