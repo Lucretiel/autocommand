@@ -1,3 +1,6 @@
+.. image:: https://travis-ci.org/Lucretiel/autocommand.svg?branch=master
+    :target: https://travis-ci.org/Lucretiel/autocommand
+
 autocommand
 ===========
 
