@@ -1,5 +1,7 @@
 .. image:: https://travis-ci.org/Lucretiel/autocommand.svg?branch=master
     :target: https://travis-ci.org/Lucretiel/autocommand
+.. image:: https://coveralls.io/repos/Lucretiel/autocommand/badge.svg
+    :target: https://coveralls.io/r/Lucretiel/autocommand
 
 autocommand
 ===========
