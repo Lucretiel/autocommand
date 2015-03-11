@@ -1,14 +1,14 @@
 language: python
 python:
-- '3.3'
-- '3.4'
+  - '3.3'
+  - '3.4'
 install:
-- pip install -e .
-- pip install coverage pytest-cov coveralls wheel pytest-pep8
+  - pip install -e .
+  - pip install pytest-cov pytest-pep8 coveralls
 script:
-- sh util/test.sh
+  - sh util/test.sh
 after_success:
-- coveralls
+  - coveralls
 deploy:
   provider: pypi
   user: Lucretiel
