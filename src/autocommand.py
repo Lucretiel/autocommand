@@ -21,7 +21,7 @@ from contextlib import contextmanager
 from io import IOBase
 
 
-__version__ = '0.9.5'
+__version__ = '0.9.6'
 
 
 _empty = Parameter.empty
