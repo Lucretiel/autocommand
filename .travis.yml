@@ -13,7 +13,7 @@ deploy:
   provider: pypi
   user: Lucretiel
   password:
-    secure: ItMHM+YUcQm3JRQwCpaiSiPSTpwRy33oUQy877x7SJg6Cmd8ImnYbHGn4nBTQd4/Zp3qizmTK8ohE1r+lhvEySO9s8DSit4ArI0/TQbsPfVTUQzzka5ONnZSWwYu8hprUp+fc9MjeydLFioYFg825LX5qL1QCMbk1J2U8G5ohP8=
+    secure: kLTVnrjyggnqaGnLAi5M02LDGIC/hfQmdFD+2onZVjRyj3EKYvZ/INz9NtIPgMo4ocixe59LPJI40nORm53ifPiKZs0HikRw7Z/ebzqDXsyShlP4alxd35jXglDV+dRF8yT86UxlLYaUWp5JYODcGKZuMpBGqxu6KD2apq1EILc=
   on:
     tags: true
   distributions: sdist bdist_wheel
