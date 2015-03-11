@@ -1,18 +1,14 @@
 language: python
 python:
-  - "3.3"
-  - "3.4"
-
+- '3.3'
+- '3.4'
 install:
-  - pip install -e .
-  - pip install coverage pytest-cov coveralls wheel
-
+- pip install -e .
+- pip install coverage pytest-cov coveralls wheel
 script:
-  - sh -x util/test.sh
-
+- sh -x util/test.sh
 after_success:
-  - coveralls
-
+- coveralls
 deploy:
   provider: pypi
   user: Lucretiel
@@ -20,4 +16,4 @@ deploy:
     secure: ItMHM+YUcQm3JRQwCpaiSiPSTpwRy33oUQy877x7SJg6Cmd8ImnYbHGn4nBTQd4/Zp3qizmTK8ohE1r+lhvEySO9s8DSit4ArI0/TQbsPfVTUQzzka5ONnZSWwYu8hprUp+fc9MjeydLFioYFg825LX5qL1QCMbk1J2U8G5ohP8=
   on:
     tags: true
-  distributions: "sdist bdist_wheel"
+  distributions: sdist bdist_wheel
