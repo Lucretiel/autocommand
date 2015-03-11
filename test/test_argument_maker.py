@@ -6,7 +6,11 @@ from io import IOBase
 
 from autocommand import _make_argument
 
+
 def param(**kwargs):
+    '''
+    Create a inspect.Parameter with the (default) kind POSITIONAL_OR_KEYWORD
+    '''
     kwargs.setdefault('kind', Parameter.POSITIONAL_OR_KEYWORD)
     return Parameter(**kwargs)
 
@@ -59,6 +63,7 @@ arg_cases = [
         {'nargs': '*', 'type': int}),
 ]
 
+
 @mark.parametrize('param, kwargs', arg_cases)
 def test_make_arguments(param, kwargs):
     made_args, made_kwargs = _make_argument(param, set())
@@ -95,9 +100,10 @@ flag_cases = [
         ['--a'], {'a', 'A'})
 ]
 
+
 @mark.parametrize('param, used, flags, new_used', flag_cases)
 def test_flag_creation(param, used, flags, new_used):
-    #Ensure transitivity: copy the set
+    # Ensure transitivity: copy the set
     used = set(used)
     made_args, made_kwargs = _make_argument(param, used)
 

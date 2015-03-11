@@ -1,7 +1,7 @@
 import autocommand
 from inspect import Parameter
-
 import pytest
+
 
 @pytest.mark.parametrize('annotation, type, description', [
     (Parameter.empty,      None, None),
@@ -16,5 +16,3 @@ def test_annotation(annotation, type, description):
 def test_invalid_annotation():
     with pytest.raises(autocommand.AnnotationError):
         autocommand._get_type_description(None)
-
-
