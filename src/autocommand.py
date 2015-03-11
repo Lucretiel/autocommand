@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
+import sys
 from inspect import signature, Parameter, getdoc
 from argparse import ArgumentParser, _StoreConstAction
 from contextlib import contextmanager
@@ -199,18 +200,22 @@ def autocommand(
     Decorator to create an autocommand function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
     `epilog` parameters, to parse command line arguments corrosponding to the
-    function's parameters. The function's signature is changed to accept *argv
-    parameters, as from `sys.argv[1:]`, though you can supply your own. When
-    called, the function parses the arguments provided, then supplies them to
-    the decorated function. Keep in mind that this happens with plain argparse,
-    so supplying invalid arguments or '-h' will cause a usage statement to be
-    printed and a `SystemExit` to be raised.
+    function's parameters. The function's signature is changed to accept an
+    argv parameters, as from `sys.argv[1:]`, though you can supply your own.
+    When called, the function parses the arguments provided, then supplies them
+    to the decorated function. Keep in mind that this happens with plain
+    argparse, so supplying invalid arguments or '-h' will cause a usage
+    statement to be printed and a `SystemExit` to be raised.
 
     Optionally, pass a module name (typically `__name__`) as the first argument
-    to `autocommand`. If you do, and it is "__main__", the decorated function
-    is called immediately with sys.argv, and the progam is exited with the
-    return value; this is so that you can call `@autocommand(__name__)` and
-    still be able to import the module for testing.
+    to `autocommand`. If you do, and it is "__main__" or True, the decorated
+    function is called immediately with `sys.argv[1:]`, and the progam is exited
+    with the return value; this is so that you can call `@autocommand(__name__)`
+    and still be able to import the module for testing.
+    
+    The function can also be called with no arguments; in this case,
+    `sys.argv[1:]` is used by default. This is so that an autocommand function
+    can be used as a setuptools entry point, as well as a normal main function.
 
     The `desctiption` and `epilog` parameters corrospond to the same respective
     argparse parameters. If no description is given, it defaults to the
@@ -241,7 +246,13 @@ def autocommand(
         local_parser = parser or _make_parser(
             main_sig, description or getdoc(main), epilog, add_nos)
 
-        def main_wrapper(*argv):
+        def main_wrapper(argv=None):
+            # Import here, rather than setting the parameter to a default, so
+            # that changes to argv (however unlikely) are reflected in future
+            # calls.
+            if argv is None:
+                argv = sys.argv[1:]
+
             # Get empty argument binding, to fill with parsed arguments. This
             # object does all the heavy lifting of turning named arguments into
             # into correctly bound *args and **kwargs.
@@ -252,8 +263,7 @@ def autocommand(
 
         # If we are running as a script/program, call main right away and exit.
         if module == '__main__' or module is True:
-            from sys import exit, argv
-            exit(main_wrapper(*argv[1:]))
+            sys.exit(main_wrapper())
 
         # Otherwise, attach the wrapped main function and parser, and return
         # the wrapper.
