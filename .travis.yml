@@ -4,9 +4,9 @@ python:
 - '3.4'
 install:
 - pip install -e .
-- pip install coverage pytest-cov coveralls wheel
+- pip install coverage pytest-cov coveralls wheel pytest-pep8
 script:
-- sh -x util/test.sh
+- sh util/test.sh
 after_success:
 - coveralls
 deploy:
