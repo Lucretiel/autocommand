@@ -1,3 +1,11 @@
 #!/bin/sh
 
-exec py.test --cov src --cov-report term-missing --cov-config .coveragerc test
+set -ex
+
+pep8 --show-source src test
+
+py.test \
+	--cov autocommand \
+	--cov-report term-missing \
+	--cov-config .coveragerc \
+	test

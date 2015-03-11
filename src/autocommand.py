@@ -21,7 +21,7 @@ from contextlib import contextmanager
 from io import IOBase
 
 
-__version__ = '0.9.5'
+__version__ = '0.9.6'
 
 
 _empty = Parameter.empty
@@ -184,8 +184,8 @@ def _make_parser(main_sig, description, epilog, add_nos):
                 action='store_const',
                 dest=action.dest,
                 const=action.default)
-                # No need for a default=, as the first action takes
-                # precedence.
+            # No need for a default=, as the first action takes
+            # precedence.
     return parser
 
 
@@ -230,11 +230,11 @@ def autocommand(
 
     # If @autocommand is used instead of @autocommand(__name__)
     if callable(module):
-        return autocommand(None,
+        return autocommand(
             description=description,
             epilog=epilog,
             add_nos=add_nos,
-            parser=parser) (module)
+            parser=parser)(module)
 
     def decorator(main):
         main_sig = signature(main)

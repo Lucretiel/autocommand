@@ -4,8 +4,7 @@ from argparse import ArgumentParser
 from autocommand import autocommand
 
 
-@pytest.mark.parametrize('module_name',
-    ['__main__', True])
+@pytest.mark.parametrize('module_name', ['__main__', True])
 def test_name_main(module_name):
     '''
     Test that applying the autocommand decorator to a function with '__name__'
@@ -98,6 +97,7 @@ def test_custom_parser():
 
     with pytest.raises(SystemExit):
         prog('-v', '-q')
+
 
 def test_nos():
     @autocommand(add_nos=True)

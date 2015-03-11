@@ -4,6 +4,7 @@ import pytest
 from pytest import raises
 from functools import wraps
 
+
 def run_autocmd_tests(*cases):
     '''
     This decorator wraps up a bunch of test cases for an autocommand function.
@@ -55,6 +56,7 @@ def test_single_arg(arg1):
     ('1', 1))
 def test_int_arg(arg1: int):
     return arg1
+
 
 @run_autocmd_tests(
     ('',        []),
