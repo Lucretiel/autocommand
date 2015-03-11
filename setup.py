@@ -7,7 +7,7 @@ def getfile(filename):
 
 setup(
     name='autocommand',
-    version='0.9.6',
+    version='1.0.0',
     py_modules=['autocommand'],
     package_dir={'': 'src'},
     platforms='any',
@@ -17,7 +17,7 @@ setup(
     description='A library to create a command-line program from a function',
     long_description=getfile('README.rst'),
     classifiers=[
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)',
         'Programming Language :: Python',
