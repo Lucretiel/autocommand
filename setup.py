@@ -7,7 +7,7 @@ def getfile(filename):
 
 setup(
     name='autocommand',
-    version='1.0.1',
+    version='1.0.2',
     py_modules=['autocommand'],
     package_dir={'': 'src'},
     platforms='any',
