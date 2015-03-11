@@ -265,7 +265,7 @@ def autocommand(
 
 
 @contextmanager
-def smart_open(filename_or_file, *args, **kwargs):
+def smart_open(filename_or_file, *args, flush=True, **kwargs):
     '''
     This context manager allows you to open a filename, if you want to default
     some already-existing file object, like sys.stdout, which shouldn't be
@@ -280,10 +280,20 @@ def smart_open(filename_or_file, *args, **kwargs):
                 # Works correctly if name is a str filename or sys.stdout
                 print("Some stuff", file=f)
                 # If it was a filename, f is closed at the end here.
+
+    By default, if the argument is *not* opened, it is flushed at the end of
+    the context. This is for consistency with the opened files, which are
+    implicitly flushed when they are closed at the end of the context. Pass
+    `flush=False` to disable this behavior
     '''
-    if isinstance(filename_or_file, IOBase):
-        yield filename_or_file
-        filename_or_file.flush()
+    try:
+        file = open(filename_or_file, *args, **kwargs)
+    except TypeError:
+        try:
+            yield filename_or_file
+        finally:
+            if flush:
+                filename_or_file.flush()
     else:
-        with open(filename_or_file, *args, **kwargs) as file:
+        with file:
             yield file
