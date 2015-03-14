@@ -30,9 +30,9 @@ def run_autocmd_tests(*cases):
                 args = args.split()
                 if result is SystemExit:
                     with raises(SystemExit):
-                        prog(*args)
+                        prog(args)
                 else:
-                    assert prog(*args) == result
+                    assert prog(args) == result
         return test_wrapper
     return decorator
 
