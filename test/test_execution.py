@@ -26,6 +26,17 @@ def test_name_main(module_name):
             pytest.fail("autocommand function didn't exit")
 
 
+def test_no_args():
+    with patch('sys.argv', ['prog', 'foo', '0']):
+        @autocommand
+        def prog(arg1, arg2: int):
+            assert arg1 == 'foo'
+            assert arg2 == 0
+            return sentinel.exit_code
+
+        assert prog() == sentinel.exit_code
+
+
 def test_main_attr():
     @autocommand
     def prog(arg1=False):
@@ -36,8 +47,8 @@ def test_main_attr():
     assert func() == False
     assert func(True) == True
     assert func(arg1=10) == 10
-    assert prog() == False
-    assert prog('--arg1') == True
+    assert prog([]) == False
+    assert prog(['--arg1']) == True
 
 
 def test_docstring(capsys):
@@ -49,7 +60,7 @@ def test_docstring(capsys):
         '''
 
     with pytest.raises(SystemExit):
-        prog('-h')
+        prog(['-h'])
 
     out, err = capsys.readouterr()
     assert "This is the help text" in out
@@ -64,7 +75,7 @@ def test_desc_epilog(capsys):
         pass
 
     with pytest.raises(SystemExit):
-        prog('-h')
+        prog(['-h'])
 
     out, err = capsys.readouterr()
     assert "This is the description" in out
@@ -90,13 +101,13 @@ def test_custom_parser():
     def prog(arg, verbose, quiet):
         return arg, verbose, quiet
 
-    assert prog() == (None, False, False)
-    assert prog('foo') == ('foo', False, False)
-    assert prog('-v') == (None, True, False)
-    assert prog('-q') == (None, False, True)
+    assert prog([]) == (None, False, False)
+    assert prog(['foo']) == ('foo', False, False)
+    assert prog(['-v']) == (None, True, False)
+    assert prog(['-q']) == (None, False, True)
 
     with pytest.raises(SystemExit):
-        prog('-v', '-q')
+        prog(['-v', '-q'])
 
 
 def test_nos():
@@ -104,8 +115,8 @@ def test_nos():
     def prog(verbose=False):
         return verbose
 
-    assert prog() == False
-    assert prog('--verbose') == True
-    assert prog('--no-verbose') == False
-    assert prog('--verbose', '--no-verbose') == False
-    assert prog('--no-verbose', '--verbose') == True
+    assert prog([]) == False
+    assert prog(['--verbose']) == True
+    assert prog(['--no-verbose']) == False
+    assert prog(['--verbose', '--no-verbose']) == False
+    assert prog(['--no-verbose', '--verbose']) == True
