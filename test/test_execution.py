@@ -26,6 +26,17 @@ def test_name_main(module_name):
             pytest.fail("autocommand function didn't exit")
 
 
+def test_no_args():
+    with patch('sys.argv', ['prog', 'foo', '0']):
+        @autocommand
+        def prog(arg1, arg2: int):
+            assert arg1 == 'foo'
+            assert arg2 == 0
+            return sentinel.exit_code
+
+        assert prog() == sentinel.exit_code
+
+
 def test_main_attr():
     @autocommand
     def prog(arg1=False):
