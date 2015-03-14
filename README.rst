@@ -167,6 +167,26 @@ given an explicit ``bool`` type, it becomes an option switch.
 
 Autocommand attempts to do the "correct thing" in these cases- if the default is ``True``, then supplying the switch makes the argument ``False``; if the type is ``bool`` and the default is some other ``True`` value, then supplying the switch makes the argument ``False``, while not supplying the switch makes the argument the default value.
 
+Autocommand also supports the creation of switch inverters. Pass ``add_nos=True`` to ``autocommand`` to enable this.
+
+.. code:: python
+
+    @autocommand(__name__, add_nos=True)
+    def example(verbos=False):
+        pass
+
+::
+
+    $ python example.py -h
+    usage: ipython [-h] [-v] [--no-verbose]
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -v, --verbose
+      --no-verbose
+
+Using the `--no-` version of a switch will pass the opposite value in as a function argument. If multiple switches are present, the last one takes precedence.
+
 Files
 `````
 
@@ -295,7 +315,7 @@ Even though autocommand is being applied to the ``wrapper`` returned by ``print_
 Testing and Library use
 -----------------------
 
-The decorated function is only called and exited from if the first argument to ``autocommand`` is ``'__main__'`` or ``True``. If it is neither of these values, or no argument is given, then a new main function is created by the decorator. This function has the signature ``main(*argv)``, and is intended to be called with arguments as if via ``main(*sys.argv[1:])``. The function has the attributes ``parser`` and ``main``, which are the generated ``ArgumentParser`` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a ``parse_args()`` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling ``sys.exit``, the ``parse_args()`` function will raise a ``SystemExit`` in the event of a parsing error or ``-h/--help`` argument.
+The decorated function is only called and exited from if the first argument to ``autocommand`` is ``'__main__'`` or ``True``. If it is neither of these values, or no argument is given, then a new main function is created by the decorator. This function has the signature ``main(argv=None)``, and is intended to be called with arguments as if via ``main(sys.argv[1:])``. The function has the attributes ``parser`` and ``main``, which are the generated ``ArgumentParser`` and the original main function that was decorated. This is to facilitate testing and library use of your main. Calling the function triggers a ``parse_args()`` with the supplied arguments, and returns the result of the main function. Note that, while it returns instead of calling ``sys.exit``, the ``parse_args()`` function will raise a ``SystemExit`` in the event of a parsing error or ``-h/--help`` argument.
 
 .. code:: python
 
@@ -318,14 +338,12 @@ The decorated function is only called and exited from if the first argument to `
     LOUD NOISES
     0
 
+If the function is called with no arguments, ``sys.argv[1:]`` is used. This is to allow the autocommand function to be used as a setuptools entry ppint.
+
 Features, notes, and limitations
 --------------------------------
 
-- ``--options`` are given single character ``-s``\ hort options as well, if possible. Each capitalization of the first letter in the parameter name is tried. If any parameters have only a single letter name, they aren't given ``--long`` versions.
-- ``autocommand`` supports a few other kwargs:
-
-  - If a ``parser`` is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in ``autocommand``.
-  - If ``add_nos`` is set to True, then for each boolean ``--switch`` in the parameter list, a ``--no-switch`` is added, to cancel it out.
+- ``autocommand`` also supports a ``parser`` kwarg. If it is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in ``autocommand``. The parser's argument names (as returned by ``parse_args``) should match up with the function's parameter names, though the order doesn't matter.
 
 - There are a few possible exceptions that ``autocommand`` can raise. All of them derive from ``autocommand.AutocommandError``, which is a ``TypeError``.
 
