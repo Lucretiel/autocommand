@@ -312,6 +312,54 @@ Autocommand automatically follows wrapper chains created by ``@functools.wraps``
 
 Even though autocommand is being applied to the ``wrapper`` returned by ``print_yielded``, it still retreives the signature of the underlying ``seq`` function to create the argument parsing.
 
+Custom Parser
+~~~~~~~~~~~~~
+
+While autocommand's automatic parser generator is a powerful convenience, it doesn't cover all of the different features that argparse provides. If you need these features, you can provide your own parser as a kwarg to `autocommand`:
+
+.. code:: python
+
+    from argparse import ArgumentParser
+    from autocommand import autocommand
+
+    parser = ArgumentParser()
+    # autocommand can't do optional positonal parameters
+    parser.add_argument('arg', nargs='?')
+    # or mutually exclusive options
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-v', '--verbose', action='store_true')
+    group.add_argument('-q', '--quiet', action='store_true')
+
+    @autocommand(__name__, parser=parser)
+    def main(arg, verbose, quiet):
+        print(arg, verbose, quiet)
+
+::
+
+    $ python parser.py -h
+    usage: write_file.py [-h] [-v | -q] [arg]
+
+    positional arguments:
+      arg
+
+    optional arguments:
+      -h, --help     show this help message and exit
+      -v, --verbose
+      -q, --quiet
+    $ python parser.py
+    None False False
+    $ python parser.py hello
+    hello False False
+    $ python parser.py -v
+    None True False
+    $ python parser.py -q
+    None False True
+    $ python parser.py -vq
+    usage: parser.py [-h] [-v | -q] [arg]
+    parser.py: error: argument -q/--quiet: not allowed with argument -v/--verbose
+
+Any parser should work fine, so long as each of the parser's arguments has a corresponding parameter in the decorated main function. The order of parameters doesn't matter, as long as they are all present. Note that when using a custom parser, autocommand doesn't modify the parser or the retrieved arguments. This means that no description/epilog will be added, and the function's type annotations and defaults (if present) will be ignored.
+
 Testing and Library use
 -----------------------
 
@@ -328,8 +376,7 @@ The decorated function is only called and exited from if the first argument to `
 
         return 0
 
-    # Note that argv[0] must be included.
-    print(test_prog('test', '-v', 'hello', '80'))
+    print(test_prog(['-v', 'hello', '80']))
 
 ::
 
@@ -338,12 +385,10 @@ The decorated function is only called and exited from if the first argument to `
     LOUD NOISES
     0
 
-If the function is called with no arguments, ``sys.argv[1:]`` is used. This is to allow the autocommand function to be used as a setuptools entry ppint.
+If the function is called with no arguments, ``sys.argv[1:]`` is used. This is to allow the autocommand function to be used as a setuptools entry point.
 
-Features, notes, and limitations
---------------------------------
-
-- ``autocommand`` also supports a ``parser`` kwarg. If it is given, that parser object is used instead of one being generated on from the function signature. This allows you to use a more elaborate parser, with features that aren't supported by the automation system in ``autocommand``. The parser's argument names (as returned by ``parse_args``) should match up with the function's parameter names, though the order doesn't matter.
+Exceptions and limitations
+--------------------------
 
 - There are a few possible exceptions that ``autocommand`` can raise. All of them derive from ``autocommand.AutocommandError``, which is a ``TypeError``.
 
@@ -367,4 +412,3 @@ Autocommand cannot be important from the project root; this is to enforce separa
     $ python setup.py develop
 
 This will create a link to the source files in the deployment directory, so that any source changes are reflected when it is imported.
-
