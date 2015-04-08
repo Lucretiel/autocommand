@@ -193,7 +193,8 @@ def autocommand(
         description=None,
         epilog=None,
         add_nos=False,
-        parser=None):
+        parser=None,
+        loop=None):
     '''
     Decorator to create an autocommand function. The function's signature is
     analyzed, and an ArgumentParser is created, using the `description` and
@@ -227,6 +228,11 @@ def autocommand(
 
     If a parser is given, it is used instead of one generated from the function
     signature.
+    
+    If a loop is given, it is interpreted as an asyncio event loop, and the
+    function is interprested as a coroutine. In this case, calling the returned
+    autocommand function runs the coroutine in that loop; equivelent to calling
+    `loop.run_until_complete(main(...))`.
 
     The decorated function is attached to the result as the `main` attribute,
     and the parser is attached as the `parser` attribute.
@@ -238,14 +244,15 @@ def autocommand(
             description=description,
             epilog=epilog,
             add_nos=add_nos,
-            parser=parser)(module)
+            parser=parser
+            loop=loop)(module)
 
     def decorator(main):
         main_sig = signature(main)
         local_parser = parser or _make_parser(
             main_sig, description or getdoc(main), epilog, add_nos)
-
-        def main_wrapper(argv=None):
+        
+        def plain_main_wrapper(argv=None):
             if argv is None:
                 argv = sys.argv[1:]
 
@@ -256,6 +263,13 @@ def autocommand(
             func_args.arguments.update(vars(local_parser.parse_args(argv)))
 
             return main(*func_args.args, **func_args.kwargs)
+        
+        if loop is not None:
+            def async_main_wrapper(argv=None):
+                return loop.run_until_complete(plain_main_wrapper(argv))
+            main_wrapper = async_main_wrapper
+        else:
+            main_wrapper = plain_main_wrapper
 
         # If we are running as a script/program, call main right away and exit.
         if module == '__main__' or module is True:
