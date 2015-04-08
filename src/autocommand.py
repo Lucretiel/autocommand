@@ -177,8 +177,6 @@ def _make_parser(main_sig, description, epilog, add_nos):
         # If requested, add --no- option counterparts. Because the
         # option/argument names can't have a hyphen character, these
         # shouldn't conflict with any existing options.
-        # TODO: decide if it's better, stylistically, to do these at
-        # the end, AFTER all of the parameters.
         if add_nos and isinstance(action, _StoreConstAction):
             parser.add_argument(
                 '--no-{}'.format(action.dest),
@@ -248,9 +246,6 @@ def autocommand(
             main_sig, description or getdoc(main), epilog, add_nos)
 
         def main_wrapper(argv=None):
-            # Import here, rather than setting the parameter to a default, so
-            # that changes to argv (however unlikely) are reflected in future
-            # calls.
             if argv is None:
                 argv = sys.argv[1:]
 
@@ -268,6 +263,12 @@ def autocommand(
 
         # Otherwise, attach the wrapped main function and parser, and return
         # the wrapper.
+        #TODO: technically, this results in an inconsistency; if the above
+        # main_wrapper is called, it doesn't have the attributes, unlike if
+        # it is returned from the decorator to be invoked manually. The
+        # assumption is that these attributes are only needed in the latter
+        # case, and in fact would be nearly impossible to access anyway in
+        # the former case.
         main_wrapper.main = main
         main_wrapper.parser = local_parser
         return main_wrapper
@@ -293,6 +294,8 @@ def smart_open(filename_or_file, *args, **kwargs):
                 # If it was a filename, f is closed at the end here.
     '''
     try:
+        # Testing note: For some reason, provding a MagicMock(IOBase) *doesn't*
+        # cause a TypeError here, so make sure to account for that.
         file = open(filename_or_file, *args, **kwargs)
     except TypeError:
         yield filename_or_file
