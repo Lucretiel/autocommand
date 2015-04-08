@@ -263,7 +263,7 @@ def autocommand(
 
         # Otherwise, attach the wrapped main function and parser, and return
         # the wrapper.
-        #TODO: technically, this results in an inconsistency; if the above
+        # TODO: technically, this results in an inconsistency; if the above
         # main_wrapper is called, it doesn't have the attributes, unlike if
         # it is returned from the decorator to be invoked manually. The
         # assumption is that these attributes are only needed in the latter
