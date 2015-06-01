@@ -18,6 +18,7 @@
 from asyncio import get_event_loop, coroutine
 from functools import wraps
 
+
 def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
     '''
     Convert an asyncio coroutine into a function which, when called, is
@@ -74,11 +75,10 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
         if pass_loop:
             kwargs['loop'] = local_loop
 
-        task = local_loop.create_task(coro(*args, **kwargs))
-
         if forever:
+            local_loop.create_task(coro(*args, **kwargs))
             local_loop.run_forever()
         else:
-            return local_loop.run_until_complete(task)
+            return local_loop.run_until_complete(coro(*args, **kwargs))
 
     return autoasync_wrapper

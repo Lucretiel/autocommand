@@ -18,6 +18,7 @@
 from .autoparse import autoparse
 from .automain import automain
 
+
 def autocommand(
         module, *,
         description=None,
@@ -26,6 +27,9 @@ def autocommand(
         parser=None,
         loop=None,
         forever=False):
+
+    if callable(module):
+        raise TypeError('autocommand requires a module name argument')
 
     def autocommand_decorator(func):
         # Step 1: if requested, run it all in an asyncio event loop
@@ -43,7 +47,8 @@ def autocommand(
         # simplifies the stack trace and ensures errors are reported earlier.
         # It also ensures that errors raised during parsing & passing are still
         # raised if `forever` is True.
-        func = autoparse(func,
+        func = autoparse(
+            func,
             description=description,
             epilog=epilog,
             add_nos=add_nos,

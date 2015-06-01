@@ -184,7 +184,8 @@ def make_parser(func_sig, description, epilog, add_nos):
     return parser
 
 
-def autoparse(func=None, *,
+def autoparse(
+        func=None, *,
         description=None,
         epilog=None,
         add_nos=False,

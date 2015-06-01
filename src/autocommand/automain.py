@@ -17,6 +17,7 @@
 
 import sys
 
+
 def automain(module, args=(), kwargs=None):
     '''
     This decorator automatically invoke a function if the module is being run
