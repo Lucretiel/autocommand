@@ -2,7 +2,7 @@
 
 set -ex
 
-pep8 --show-source -v src test
+pep8 --show-source src test
 
 py.test \
 	--cov autocommand \
