@@ -179,7 +179,7 @@ def make_parser(func_sig, description, epilog, add_nos):
 
     for param in params:
         for flags, spec in _make_argument(param, used_char_args, add_nos):
-            action = parser.add_argument(*flags, **spec)
+            parser.add_argument(*flags, **spec)
 
     return parser
 
