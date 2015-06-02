@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
-from asyncio import get_event_loop, coroutine
+from asyncio import get_event_loop
 from functools import wraps
+from inspect import signature
 
 
 def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
@@ -25,8 +26,7 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
     evaluted in an event loop, and the return value returned. This is intented
     to make it easy to write entry points into asyncio coroutines, which
     otherwise need to be explictly evaluted with an event loop's
-    run_until_complete. This decorator internally applies the @coroutine
-    decorator to the decorated function.
+    run_until_complete.
 
     `loop` defaults to asyncio.get_event_loop(). The call is defered until the
     function itself is called, so that clients can install custom event loops
@@ -64,8 +64,6 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
             forever=forever,
             pass_loop=pass_loop)
 
-    coro = coroutine(coro)
-
     @wraps(coro)
     def autoasync_wrapper(*args, **kwargs):
         # Defer the call to get_event_loop so that, if a custom policy is
@@ -80,5 +78,12 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
             local_loop.run_forever()
         else:
             return local_loop.run_until_complete(coro(*args, **kwargs))
+
+    # Attach an updated signature, with the "loop" parameter filted out. This
+    # allows 'pass_loop' to be used with autoparse
+    if pass_loop:
+        sig = signature(coro)
+        autoasync_wrapper.__signature__ = sig.replace(parameters=(
+            param for name, param in sig.parameters.items() if name != "loop"))
 
     return autoasync_wrapper
