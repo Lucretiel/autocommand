@@ -20,7 +20,7 @@ import sys
 
 def automain(module, args=(), kwargs=None):
     '''
-    This decorator automatically invoke a function if the module is being run
+    This decorator automatically invokes a function if the module is being run
     as the "__main__" module. Optionally, provide args or kwargs with which to
     call the function. If `module` is "__main__", the function is called, and
     the program is `sys.exit`ed with the return value. You can also pass `True`
