@@ -34,12 +34,14 @@ def autocommand(
     def autocommand_decorator(func):
         # Step 1: if requested, run it all in an asyncio event loop
         if loop is not None:
+            # These imports are (by default) only 3.4+, and so are defered
+            # until explicitly needed.
             from asyncio import get_event_loop
             from .autoasync import autoasync
 
             func = autoasync(
                 func,
-                loop=get_event_loop() if loop is True else loop,
+                loop=None if loop is True else loop,
                 forever=forever)
 
         # Step 2: create parser. We do this second so that the arguments are

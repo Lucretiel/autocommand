@@ -28,12 +28,15 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
     otherwise need to be explictly evaluted with an event loop's
     run_until_complete.
 
-    `loop` defaults to asyncio.get_event_loop(). The call is defered until the
-    function itself is called, so that clients can install custom event loops
-    or event loop policies.
+    If `loop` is given, it is used as the event loop to run the coro in. If it
+    is None (the default), the loop is retreived using asyncio.get_event_loop.
+    This call is defered until the decorated function is called, so that
+    callers can install custom event loops or event loop policies after
+    @autoasync is applied.
 
     If `forever` is True, the loop is run forever after the decorated coroutine
-    is finished.
+    is finished. Use this for servers created with asyncio.start_server and the
+    like.
 
     If `pass_loop` is True, the event loop object is passed into the coroutine
     as the `loop` kwarg when the wrapper function is called.
@@ -68,7 +71,7 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
     def autoasync_wrapper(*args, **kwargs):
         # Defer the call to get_event_loop so that, if a custom policy is
         # installed, it is respected at call time.
-        local_loop = loop or get_event_loop()
+        local_loop = get_event_loop() if loop is None else loop
 
         if pass_loop:
             kwargs['loop'] = local_loop
