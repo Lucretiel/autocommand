@@ -26,29 +26,36 @@ def autocommand(
         add_nos=False,
         parser=None,
         loop=None,
-        forever=False):
+        forever=False,
+        pass_loop=False):
 
     if callable(module):
         raise TypeError('autocommand requires a module name argument')
 
     def autocommand_decorator(func):
-        # Step 1: if requested, run it all in an asyncio event loop
+        # Step 1: if requested, run it all in an asyncio event loop. autoasync
+        # patches the __signature__ of the decorated function, so that in the
+        # event that pass_loop is True, the `loop` parameter of the original
+        # function will *not* be interpreted as a command-line argument by
+        # autoparse
         if loop is not None:
-            # These imports are (by default) only 3.4+, and so are defered
-            # until explicitly needed.
+            # These imports are (by default) only 3.4+, while the rest of the
+            # library supports python 3.3+, and so are defered until explicitly
+            # needed.
             from asyncio import get_event_loop
             from .autoasync import autoasync
 
             func = autoasync(
                 func,
                 loop=None if loop is True else loop,
+                pass_loop=pass_loop,
                 forever=forever)
 
         # Step 2: create parser. We do this second so that the arguments are
-        # parsed and passed *before* entering the asyncio event loop. This
-        # simplifies the stack trace and ensures errors are reported earlier.
-        # It also ensures that errors raised during parsing & passing are still
-        # raised if `forever` is True.
+        # parsed and passed *before* entering the asyncio event loop, if it
+        # exists. This simplifies the stack trace and ensures errors are
+        # reported earlier. It also ensures that errors raised during parsing &
+        # passing are still raised if `forever` is True.
         func = autoparse(
             func,
             description=description,

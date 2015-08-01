@@ -39,13 +39,15 @@ def automain(module, args=(), kwargs=None):
 
     # Check that @automain(...) was called, rather than @automain
     if callable(module):
-        raise TypeError('@automain requires a module name (__name__) argument')
+        raise TypeError(
+            '@automain requires a module name (__name__) argument',
+            module
 
     if module == '__main__' or module is True:
-        # There's no immutable dict type, so it's unsafe to use it as a default
         if kwargs is None:
             kwargs = {}
 
+        # Use a function definition instead of a lambda for a neater traceback
         def automain_decorator(main):
             sys.exit(main(*args, **kwargs))
 

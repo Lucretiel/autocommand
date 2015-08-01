@@ -19,25 +19,25 @@ import sys
 from inspect import signature, getdoc, Parameter
 from argparse import ArgumentParser
 from contextlib import contextmanager
-from io import IOBase
 from functools import wraps
+from io import IOBase
 from autocommand.errors import AutocommandError
 
 
 _empty = Parameter.empty
 
 
-class AnnotationError(AutocommandError):
+class AnnotationError(AutocommandError, TypeError):
     '''Annotation error: annotation must be a string, type, or tuple of both'''
 
 
-class PositionalArgError(AutocommandError):
+class PositionalArgError(AutocommandError, TypeError):
     '''
     Postional Arg Error: autocommand can't handle postional-only parameters
     '''
 
 
-class KWArgError(AutocommandError):
+class KWArgError(AutocommandError, TypeError):
     '''kwarg Error: autocommand can't handle a **kwargs parameter'''
 
 
@@ -61,18 +61,21 @@ def _get_type_description(annotation):
     raise AnnotationError(annotation)
 
 
-def _make_argument(param, used_char_args, add_nos):
+def _make_arguments(param, used_char_args, add_nos):
     '''
     Yield the *args and **kwargs to use for parser.add_argument for a given
     parameter. used_char_args is the set of -short options currently already in
-    use, and is updated (if necessary) by this function. May yield more than
-    one set of args and kwargs for add_argument.
+    use, and is updated (if necessary) by this function. If add_nos is True,
+    this will also yield an inverse switch for all boolean options. For
+    instance, for the boolean parameter "verbose", this will create --verbose
+    and --no-verbose.
     '''
     if param.kind is param.POSITIONAL_ONLY:
         raise PositionalArgError(param)
     elif param.kind is param.VAR_KEYWORD:
         raise KWArgError(param)
 
+    # These are the kwargs for the add_argument function.
     arg_spec = {}
     is_option = False
 
@@ -154,10 +157,10 @@ def _make_argument(param, used_char_args, add_nos):
 
     if add_nos and arg_type is bool:
         flags = ['--no-{}'.format(name)]
-        arg_spec = dict(
-            action='store_const',
-            dest=name,
-            const=default if default is not _empty else False)
+        arg_spec = {
+            'action': 'store_const',
+            'dest': name,
+            'const': default if default is not _empty else False}
 
         yield flags, arg_spec
 
@@ -178,7 +181,7 @@ def make_parser(func_sig, description, epilog, add_nos):
         key=lambda param: len(param.name) > 1)
 
     for param in params:
-        for flags, spec in _make_argument(param, used_char_args, add_nos):
+        for flags, spec in _make_arguments(param, used_char_args, add_nos):
             parser.add_argument(*flags, **spec)
 
     return parser
@@ -248,10 +251,10 @@ def autoparse(
         # Get empty argument binding, to fill with parsed arguments. This
         # object does all the heavy lifting of turning named arguments into
         # into correctly bound *args and **kwargs.
-        func_args = func_sig.bind_partial()
-        func_args.arguments.update(vars(parser.parse_args(argv)))
+        parsed_args = func_sig.bind_partial()
+        parsed_args.arguments.update(vars(parser.parse_args(argv)))
 
-        return func(*func_args.args, **func_args.kwargs)
+        return func(*parsed_args.args, **parsed_args.kwargs)
 
     # TODO: attach an updated __signature__ to autoparse_wrapper, just in case.
 
@@ -279,12 +282,8 @@ def smart_open(filename_or_file, *args, **kwargs):
                 print("Some stuff", file=f)
                 # If it was a filename, f is closed at the end here.
     '''
-    try:
-        # Testing note: For some reason, provding a MagicMock(IOBase) *doesn't*
-        # cause a TypeError here, so make sure to account for that.
-        file = open(filename_or_file, *args, **kwargs)
-    except TypeError:
-        yield filename_or_file
-    else:
-        with file:
+    if isinstance(filename_or_file, (str, bytes, int)):
+        with open(filename_or_file) as file:
             yield file
+    else:
+        yield filename_or_file
