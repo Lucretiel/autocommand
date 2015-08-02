@@ -44,21 +44,21 @@ def context_loop():
 
 
 def test_basic_autoasync(context_loop):
-    data = []
+    data = set()
 
     @asyncio.coroutine
     def coro_1():
-        data.append(1)
+        data.add(1)
         yield
-        data.append(3)
+        data.add(2)
 
         return 1
 
     @asyncio.coroutine
     def coro_2():
-        data.append(2)
+        data.add(3)
         yield
-        data.append(4)
+        data.add(4)
 
         return 2
 
@@ -76,7 +76,7 @@ def test_basic_autoasync(context_loop):
         return 3
 
     assert async_main() == 3
-    assert data == [1, 2, 3, 4]
+    assert data == {1, 2, 3, 4}
 
 
 def test_custom_loop(context_loop, new_loop):
@@ -131,15 +131,17 @@ def test_run_forever(context_loop):
         asyncio.async(stop_loop_after_1_tenth_second())
         asyncio.async(set_value_after_half_tenth_second())
         yield
-        return 10
 
-    assert async_main() != 10  # Nothing should be returned
+    async_main()
     assert retrieved_value
 
 
 def test_defered_loop(context_loop, new_loop):
     '''
-    Test that, if a new
+    Test that, if a new event loop is installed with set_event_loop AFTER the
+    autoasync decorator is applied (and no loop= is explicitly given to
+    autoasync), the new event loop is used when the decorated function is
+    called.
     '''
     @autoasync(pass_loop=True)
     @asyncio.coroutine
