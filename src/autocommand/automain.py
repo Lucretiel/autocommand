@@ -16,9 +16,14 @@
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+from .errors import AutocommandError
 
 
-def automain(module, args=(), kwargs=None):
+class AutomainRequiresModuleError(AutocommandError, TypeError):
+    pass
+
+
+def automain(module, *, args=(), kwargs=None):
     '''
     This decorator automatically invokes a function if the module is being run
     as the "__main__" module. Optionally, provide args or kwargs with which to
@@ -39,9 +44,7 @@ def automain(module, args=(), kwargs=None):
 
     # Check that @automain(...) was called, rather than @automain
     if callable(module):
-        raise TypeError(
-            '@automain requires a module name (__name__) argument',
-            module
+        raise AutomainRequiresModuleError(module)
 
     if module == '__main__' or module is True:
         if kwargs is None:

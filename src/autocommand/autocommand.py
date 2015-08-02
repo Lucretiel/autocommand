@@ -17,6 +17,10 @@
 
 from .autoparse import autoparse
 from .automain import automain
+try:
+    from .autoasync import autoasync
+except ImportError:  # pragma: no cover
+    pass
 
 
 def autocommand(
@@ -38,13 +42,7 @@ def autocommand(
         # event that pass_loop is True, the `loop` parameter of the original
         # function will *not* be interpreted as a command-line argument by
         # autoparse
-        if loop is not None:
-            # These imports are (by default) only 3.4+, while the rest of the
-            # library supports python 3.3+, and so are defered until explicitly
-            # needed.
-            from asyncio import get_event_loop
-            from .autoasync import autoasync
-
+        if loop is not None or forever or pass_loop:
             func = autoasync(
                 func,
                 loop=None if loop is True else loop,

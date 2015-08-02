@@ -80,6 +80,9 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
             kwargs['loop'] = local_loop
 
         if forever:
+            # Explicitly don't create a reference to the created task. This
+            # ensures that if an exception is raised, it is shown as soon as
+            # possible, when the created task is garbage collected.
             local_loop.create_task(coro(*args, **kwargs))
             local_loop.run_forever()
         else:
