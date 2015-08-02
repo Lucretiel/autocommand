@@ -8,7 +8,12 @@ def getfile(filename):
 setup(
     name='autocommand',
     version='2.0.1',
-    py_modules=['autocommand'],
+    py_modules=[
+        'autocommand',
+        'autocommand.automain',
+        'autocommand.autoasync',
+        'autocommand.autoparse',
+        'autocommand.autocommand'],
     package_dir={'': 'src'},
     platforms='any',
     license='LGPLv3',
