@@ -39,8 +39,8 @@ def context_loop():
     # Can't reuse new_loop() because some tests require new_loop and
     # context_loop to be different
     with closing(asyncio.new_event_loop()) as new_loop:
-        with temporary_context_loop(new_loop) as loop:
-            yield loop
+        with temporary_context_loop(new_loop):
+            yield new_loop
 
 
 def test_basic_autoasync(context_loop):
