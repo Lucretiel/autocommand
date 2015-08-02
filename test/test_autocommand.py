@@ -3,6 +3,8 @@ import sys
 from unittest.mock import patch, sentinel
 from autocommand import autocommand
 
+from test_markers import uses_async
+
 
 @pytest.fixture(scope='module')
 def autocommand_module():
@@ -23,7 +25,10 @@ def patched_autoasync(autocommand_module):
     with patch.object(
             autocommand_module,
             'autoasync',
-            autospec=True) as autoasync:
+            create=True) as autoasync:
+        if sys.version_info < (3, 4):
+            autoasync.side_effect = NameError('autoasync')
+
         yield autoasync
 
 
@@ -33,6 +38,7 @@ def patched_automain(autocommand_module):
             autocommand_module,
             'automain',
             autospec=True) as automain:
+
         yield automain
 
 
@@ -70,6 +76,7 @@ def test_autocommand_no_async(
     'input_loop, output_loop',
     [(sentinel.loop, sentinel.loop),
      (True, None)])
+@uses_async
 def test_autocommand_with_async(
         patched_automain,
         patched_autoasync,

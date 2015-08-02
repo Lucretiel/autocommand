@@ -1,7 +1,7 @@
 import pytest
-import asyncio
 from contextlib import closing, contextmanager
-from autocommand.autoasync import autoasync
+asyncio = pytest.importorskip('asyncio')
+autoasync = pytest.importorskip('autocommand.autoasync').autoasync
 
 
 @contextmanager
