@@ -113,23 +113,23 @@ def test_pass_loop(context_loop):
 
 def test_run_forever(context_loop):
     @asyncio.coroutine
-    def stop_loop_after_1_tenth_second():
-        yield from asyncio.sleep(0.1)
+    def stop_loop_after(t):
+        yield from asyncio.sleep(t)
         context_loop.stop()
 
     retrieved_value = False
 
     @asyncio.coroutine
-    def set_value_after_half_tenth_second():
+    def set_value_after(t):
         nonlocal retrieved_value
-        yield from asyncio.sleep(0.05)
+        yield from asyncio.sleep(t)
         retrieved_value = True
 
     @autoasync(forever=True)
     @asyncio.coroutine
     def async_main():
-        asyncio.async(stop_loop_after_1_tenth_second())
-        asyncio.async(set_value_after_half_tenth_second())
+        asyncio.async(set_value_after(0.1))
+        asyncio.async(stop_loop_after(0.2))
         yield
 
     async_main()

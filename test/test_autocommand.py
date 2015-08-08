@@ -3,16 +3,15 @@ import sys
 from unittest.mock import patch, sentinel
 from autocommand import autocommand
 
-from test_markers import uses_async
 
-
-@pytest.fixture(scope='module')
-def autocommand_module():
-    return sys.modules['autocommand.autocommand']
+autocommand_module = sys.modules['autocommand.autocommand']
+uses_async = pytest.mark.skipif(
+    sys.version_info < (3, 4),
+    reason="async tests require python 3.4+")
 
 
 @pytest.yield_fixture
-def patched_autoparse(autocommand_module):
+def patched_autoparse():
     with patch.object(
             autocommand_module,
             'autoparse',
@@ -21,7 +20,7 @@ def patched_autoparse(autocommand_module):
 
 
 @pytest.yield_fixture
-def patched_autoasync(autocommand_module):
+def patched_autoasync():
     with patch.object(
             autocommand_module,
             'autoasync',
@@ -33,7 +32,7 @@ def patched_autoasync(autocommand_module):
 
 
 @pytest.yield_fixture
-def patched_automain(autocommand_module):
+def patched_automain():
     with patch.object(
             autocommand_module,
             'automain',

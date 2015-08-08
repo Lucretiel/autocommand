@@ -27,18 +27,25 @@ def test_invalid_usage():
 
 
 def test_args():
-    with pytest.raises(SystemExit) as exc_info:
-        @automain(True, args=[1, 2, 3])
-        def main(a, b, c):
+    main_called = False
+    with pytest.raises(SystemExit):
+        @automain(True, args=[1, 2])
+        def main(a, b):
+            nonlocal main_called
+            main_called = True
             assert a == 1
             assert b == 2
-            assert c == 3
+    assert main_called
 
 
-def test_kwargs():
-    with pytest.raises(SystemExit) as exc_info:
-        @automain(True, kwargs={'a': 1, 'b': 2, 'c': 3})
-        def main(a, b, c):
+def test_args_and_kwargs():
+    main_called = False
+    with pytest.raises(SystemExit):
+        @automain(True, args=[1], kwargs={'b': 2})
+        def main(a, b):
+            nonlocal main_called
+            main_called = True
             assert a == 1
             assert b == 2
-            assert c == 3
+
+    assert main_called
