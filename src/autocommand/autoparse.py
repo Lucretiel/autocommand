@@ -87,7 +87,7 @@ def _make_arguments(param, used_char_args, add_nos):
 
     # If there is no explicit type, and the default is present and not None,
     # infer the type from the default.
-    if arg_type is None and default not in (_empty, None):
+    if arg_type is None and default not in {_empty, None}:
         arg_type = type(default)
 
     # Add default. The presence of a default means this is an option, not an
@@ -155,6 +155,7 @@ def _make_arguments(param, used_char_args, add_nos):
 
     yield flags, arg_spec
 
+    # Create the --no- version for boolean switches
     if add_nos and arg_type is bool:
         flags = ['--no-{}'.format(name)]
         arg_spec = {
