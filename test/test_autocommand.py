@@ -1,3 +1,20 @@
+# Copyright 2014-2016 Nathan West
+#
+# This file is part of autocommand.
+#
+# autocommand is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# autocommand is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public License
+# along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
+
 import pytest
 import sys
 from unittest.mock import patch, sentinel
@@ -5,9 +22,19 @@ from autocommand import autocommand
 
 
 autocommand_module = sys.modules['autocommand.autocommand']
+
+
+def _asyncio_unavailable():
+    try:
+        import asyncio
+    except ImportError:
+        return True
+    else:
+        return False
+
 uses_async = pytest.mark.skipif(
-    sys.version_info < (3, 4),
-    reason="async tests require python 3.4+")
+    _asyncio_unavailable(),
+    reason="async tests require asyncio (python3.4+)")
 
 
 @pytest.yield_fixture

@@ -52,11 +52,15 @@ def _get_type_description(annotation):
     elif isinstance(annotation, str):
         return None, annotation
     elif isinstance(annotation, tuple):
-        arg1, arg2 = annotation
-        if isinstance(arg1, type) and isinstance(arg2, str):
-            return arg1, arg2
-        elif isinstance(arg1, str) and isinstance(arg2, type):
-            return arg2, arg1
+        try:
+            arg1, arg2 = annotation
+        except ValueError as e:
+            raise AnnotationError(annotation) from e
+        else:
+            if isinstance(arg1, type) and isinstance(arg2, str):
+                return arg1, arg2
+            elif isinstance(arg1, str) and isinstance(arg2, type):
+                return arg2, arg1
 
     raise AnnotationError(annotation)
 
