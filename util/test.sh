@@ -9,4 +9,4 @@ py.test \
     --cov-report term-missing \
     --cov-config .coveragerc \
     --strict \
-    test
+    "$@" test
