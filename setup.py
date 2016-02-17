@@ -7,8 +7,10 @@ def getfile(filename):
 
 setup(
     name='autocommand',
-    version='2.0.1',
-    py_modules=['autocommand'],
+    version='2.1.0',
+    packages=[
+        'autocommand'
+    ],
     package_dir={'': 'src'},
     platforms='any',
     license='LGPLv3',

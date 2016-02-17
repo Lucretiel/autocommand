@@ -16,33 +16,28 @@
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-from inspect import signature, Parameter, getdoc
-from argparse import ArgumentParser, _StoreConstAction
+from inspect import signature, getdoc, Parameter
+from argparse import ArgumentParser
 from contextlib import contextmanager
+from functools import wraps
 from io import IOBase
-
-
-__version__ = '2.0.1'
+from autocommand.errors import AutocommandError
 
 
 _empty = Parameter.empty
 
 
-class AutocommandError(TypeError):
-    '''Base class for autocommand exceptions'''
-
-
-class AnnotationError(AutocommandError):
+class AnnotationError(AutocommandError, TypeError):
     '''Annotation error: annotation must be a string, type, or tuple of both'''
 
 
-class PositionalArgError(AutocommandError):
+class PositionalArgError(AutocommandError, TypeError):
     '''
     Postional Arg Error: autocommand can't handle postional-only parameters
     '''
 
 
-class KWArgError(AutocommandError):
+class KWArgError(AutocommandError, TypeError):
     '''kwarg Error: autocommand can't handle a **kwargs parameter'''
 
 
@@ -57,26 +52,34 @@ def _get_type_description(annotation):
     elif isinstance(annotation, str):
         return None, annotation
     elif isinstance(annotation, tuple):
-        arg1, arg2 = annotation
-        if isinstance(arg1, type) and isinstance(arg2, str):
-            return arg1, arg2
-        elif isinstance(arg1, str) and isinstance(arg2, type):
-            return arg2, arg1
+        try:
+            arg1, arg2 = annotation
+        except ValueError as e:
+            raise AnnotationError(annotation) from e
+        else:
+            if isinstance(arg1, type) and isinstance(arg2, str):
+                return arg1, arg2
+            elif isinstance(arg1, str) and isinstance(arg2, type):
+                return arg2, arg1
 
     raise AnnotationError(annotation)
 
 
-def _make_argument(param, used_char_args):
+def _make_arguments(param, used_char_args, add_nos):
     '''
-    Get the *args and **kwargs to use for parser.add_argument for a given
+    Yield the *args and **kwargs to use for parser.add_argument for a given
     parameter. used_char_args is the set of -short options currently already in
-    use.
+    use, and is updated (if necessary) by this function. If add_nos is True,
+    this will also yield an inverse switch for all boolean options. For
+    instance, for the boolean parameter "verbose", this will create --verbose
+    and --no-verbose.
     '''
     if param.kind is param.POSITIONAL_ONLY:
         raise PositionalArgError(param)
     elif param.kind is param.VAR_KEYWORD:
         raise KWArgError(param)
 
+    # These are the kwargs for the add_argument function.
     arg_spec = {}
     is_option = False
 
@@ -88,7 +91,7 @@ def _make_argument(param, used_char_args):
 
     # If there is no explicit type, and the default is present and not None,
     # infer the type from the default.
-    if arg_type is None and default not in (_empty, None):
+    if arg_type is None and default not in {_empty, None}:
         arg_type = type(default)
 
     # Add default. The presence of a default means this is an option, not an
@@ -154,126 +157,116 @@ def _make_argument(param, used_char_args):
     else:
         flags.append(name)
 
-    return flags, arg_spec
+    yield flags, arg_spec
+
+    # Create the --no- version for boolean switches
+    if add_nos and arg_type is bool:
+        flags = ['--no-{}'.format(name)]
+        arg_spec = {
+            'action': 'store_const',
+            'dest': name,
+            'const': default if default is not _empty else False}
+
+        yield flags, arg_spec
 
 
-def _make_parser(main_sig, description, epilog, add_nos):
+def make_parser(func_sig, description, epilog, add_nos):
     '''
     Given the signature of a function, create an ArgumentParser
     '''
     parser = ArgumentParser(description=description, epilog=epilog)
 
     used_char_args = {'h'}
-    # Add each argument. Do single-character arguments first, if
-    # present, so that they get priority, and don't have to get --long
-    # versions. sorted is stable, so the parameters will still be in
-    # relative order
-    for param in sorted(
-            main_sig.parameters.values(),
-            key=lambda param: len(param.name) > 1):
-        flags, spec = _make_argument(param, used_char_args)
-        action = parser.add_argument(*flags, **spec)
 
-        # If requested, add --no- option counterparts. Because the
-        # option/argument names can't have a hyphen character, these
-        # shouldn't conflict with any existing options.
-        if add_nos and isinstance(action, _StoreConstAction):
-            parser.add_argument(
-                '--no-{}'.format(action.dest),
-                action='store_const',
-                dest=action.dest,
-                const=action.default)
-            # No need for a default=, as the first action takes
-            # precedence.
+    # Arange the params so that single-character arguments are first. This
+    # esnures they don't have to get --long versions. sorted is stable, so the
+    # parameters will otherwise still be in relative order.
+    params = sorted(
+        func_sig.parameters.values(),
+        key=lambda param: len(param.name) > 1)
+
+    for param in params:
+        for flags, spec in _make_arguments(param, used_char_args, add_nos):
+            parser.add_argument(*flags, **spec)
+
     return parser
 
 
-def autocommand(
-        module=None, *,
+def autoparse(
+        func=None, *,
         description=None,
         epilog=None,
         add_nos=False,
         parser=None):
     '''
-    Decorator to create an autocommand function. The function's signature is
-    analyzed, and an ArgumentParser is created, using the `description` and
-    `epilog` parameters, to parse command line arguments corrosponding to the
-    function's parameters. The function's signature is changed to accept an
-    argv parameter, as from `sys.argv[1:]`, though you can supply your own.
-    When called, the function parses the arguments provided, then supplies them
-    to the decorated function. Keep in mind that this happens with plain
-    argparse, so supplying invalid arguments or '-h' will cause a usage
-    statement to be printed and a `SystemExit` to be raised.
+    This decorator converts a function that takes normal arguments into a
+    function which takes a single optional argument, argv, parses it using an
+    argparse.ArgumentParser, and calls the underlying function with the parsed
+    arguments. If it is not given, sys.argv[1:] is used. This is so that the
+    function can be used as a setuptools entry point, as well as a normal main
+    function. sys.argv[1:] is not evaluated until the function is called, to
+    allow injecting different arguments for testing.
 
-    Optionally, pass a module name (typically `__name__`) as the first argument
-    to `autocommand`. If you do, and it is "__main__" or True, the decorated
-    function is called immediately with `sys.argv[1:]`, and the progam is
-    exited with the return value; this is so that you can call
-    `@autocommand(__name__)` and still be able to import the module for
-    testing.
-
-    The function can also be called with no arguments; in this case,
-    `sys.argv[1:]` is used by default. This is so that an autocommand function
-    can be used as a setuptools entry point, as well as a normal main function.
+    It uses the argument signature of the function to create an
+    ArgumentParser. Parameters without defaults become positional parameters,
+    while parameters *with* defaults become --options. Use annotations to set
+    the type of the parameter.
 
     The `desctiption` and `epilog` parameters corrospond to the same respective
     argparse parameters. If no description is given, it defaults to the
     decorated functions's docstring, if present.
 
-    If add_nos is True, every boolean option will have a --no- version created
+    If add_nos is True, every boolean option (that is, every parameter with a
+    default of True/False or a type of bool) will have a --no- version created
     as well, which inverts the option. For instance, the --verbose option will
     have a --no-verbose counterpart. These are not mutually exclusive-
-    whichever one appears last on the command line will have precedence.
+    whichever one appears last in the argument list will have precedence.
 
     If a parser is given, it is used instead of one generated from the function
-    signature.
+    signature. In this case, no parser is created; instead, the given parser is
+    used to parse the argv argument. The parser's results' argument names must
+    match up with the parameter names of the decorated function.
 
-    The decorated function is attached to the result as the `main` attribute,
+    The decorated function is attached to the result as the `func` attribute,
     and the parser is attached as the `parser` attribute.
     '''
 
-    # If @autocommand is used instead of @autocommand(__name__)
-    if callable(module):
-        return autocommand(
-            description=description,
+    # If @autoparse(...) is used instead of @autoparse
+    if func is None:
+        return lambda f: autoparse(
+            f, description=description,
             epilog=epilog,
             add_nos=add_nos,
-            parser=parser)(module)
+            parser=parser)
 
-    def decorator(main):
-        main_sig = signature(main)
-        local_parser = parser or _make_parser(
-            main_sig, description or getdoc(main), epilog, add_nos)
+    func_sig = signature(func)
 
-        def main_wrapper(argv=None):
-            if argv is None:
-                argv = sys.argv[1:]
+    if parser is None:
+        parser = make_parser(
+            func_sig,
+            description or getdoc(func),
+            epilog,
+            add_nos)
 
-            # Get empty argument binding, to fill with parsed arguments. This
-            # object does all the heavy lifting of turning named arguments into
-            # into correctly bound *args and **kwargs.
-            func_args = main_sig.bind_partial()
-            func_args.arguments.update(vars(local_parser.parse_args(argv)))
+    @wraps(func)
+    def autoparse_wrapper(argv=None):
+        if argv is None:
+            argv = sys.argv[1:]
 
-            return main(*func_args.args, **func_args.kwargs)
+        # Get empty argument binding, to fill with parsed arguments. This
+        # object does all the heavy lifting of turning named arguments into
+        # into correctly bound *args and **kwargs.
+        parsed_args = func_sig.bind_partial()
+        parsed_args.arguments.update(vars(parser.parse_args(argv)))
 
-        # If we are running as a script/program, call main right away and exit.
-        if module == '__main__' or module is True:
-            sys.exit(main_wrapper())
+        return func(*parsed_args.args, **parsed_args.kwargs)
 
-        # Otherwise, attach the wrapped main function and parser, and return
-        # the wrapper.
-        # TODO: technically, this results in an inconsistency; if the above
-        # main_wrapper is called, it doesn't have the attributes, unlike if
-        # it is returned from the decorator to be invoked manually. The
-        # assumption is that these attributes are only needed in the latter
-        # case, and in fact would be nearly impossible to access anyway in
-        # the former case.
-        main_wrapper.main = main
-        main_wrapper.parser = local_parser
-        return main_wrapper
+    # TODO: attach an updated __signature__ to autoparse_wrapper, just in case.
 
-    return decorator
+    # Attach the wrapped function and parser, and return the wrapper.
+    autoparse_wrapper.func = func
+    autoparse_wrapper.parser = parser
+    return autoparse_wrapper
 
 
 @contextmanager
@@ -285,7 +278,8 @@ def smart_open(filename_or_file, *args, **kwargs):
     or int, the file object is created via a call to open with the given *args
     and **kwargs, sent to the context, and closed at the end of the context,
     just like "with open(filename) as f:". If it isn't one of the openable
-    types, the object simply sent to the context unchanged. Example:
+    types, the object simply sent to the context unchanged, and left unclosed
+    at the end of the context. Example:
 
         def work_with_file(name=sys.stdout):
             with smart_open(name) as f:
@@ -293,12 +287,8 @@ def smart_open(filename_or_file, *args, **kwargs):
                 print("Some stuff", file=f)
                 # If it was a filename, f is closed at the end here.
     '''
-    try:
-        # Testing note: For some reason, provding a MagicMock(IOBase) *doesn't*
-        # cause a TypeError here, so make sure to account for that.
-        file = open(filename_or_file, *args, **kwargs)
-    except TypeError:
-        yield filename_or_file
-    else:
-        with file:
+    if isinstance(filename_or_file, (str, bytes, int)):
+        with open(filename_or_file) as file:
             yield file
+    else:
+        yield filename_or_file
