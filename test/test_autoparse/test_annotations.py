@@ -2,23 +2,32 @@ import pytest
 from autocommand.autoparse import AnnotationError
 
 
-def test_all_annotation_types(check_parse, check_help_text):
+@pytest.mark.parametrize("type_object", [
+    int,
+    lambda value: "FACTORY({})".format(value)
+])
+def test_all_annotation_types(check_parse, check_help_text, type_object):
+    #  type_object is either `int` or a factory function that converts "str" to
+    #  "FACTORY(str)"
     def func(
-        int_arg: int,
+        typed_arg: type_object,
         note_arg: "note_arg description",
-        note_int: ("note_int description", int),
-        int_note: (int, "int_note description")): pass
+        note_type: ("note_type description", type_object),
+        type_note: (type_object, "type_note description")): pass
 
     check_help_text(
         lambda: check_parse(func, '-h'),
         "note_arg description",
-        "note_int description",
-        "int_note description")
+        "note_type description",
+        "type_note description")
 
     check_parse(
         func,
         "1", "2", "3", "4",
-        int_arg=1, note_arg="2", note_int=3, int_note=4)
+        typed_arg=type_object("1"),
+        note_arg="2",
+        note_type=type_object("3"),
+        type_note=type_object("4"))
 
 
 @pytest.mark.parametrize('bad_annotation', [
@@ -30,6 +39,7 @@ def test_all_annotation_types(check_parse, check_help_text):
     (int, 'hello', 'world'),  # TOO MANY THINGS
     (int, int),  # The wrong kinds of things
     ("hello", "world"),  # Nope this is bad too
+    (lambda value: value, lambda value: value),  # Too many lambdas
 ])
 def test_bad_annotation(bad_annotation, check_parse):
     def func(arg: bad_annotation): pass
