@@ -1,3 +1,5 @@
+.. image:: https://badge.fury.io/py/autocommand.svg
+    :target: https://badge.fury.io/py/autocommand
 .. image:: https://travis-ci.org/Lucretiel/autocommand.svg?branch=master
     :target: https://travis-ci.org/Lucretiel/autocommand
 .. image:: https://coveralls.io/repos/Lucretiel/autocommand/badge.svg
