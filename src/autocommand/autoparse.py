@@ -67,15 +67,20 @@ def _get_type_description(annotation):
     raise AnnotationError(annotation)
 
 
-def _make_arguments(param, used_char_args, add_nos):
+def _add_arguments(param, parser, used_char_args, add_nos):
     '''
-    Yield the *args and **kwargs to use for parser.add_argument for a given
+    Add the argument(s) to an ArgumentParser (using add_argument) for a given
     parameter. used_char_args is the set of -short options currently already in
     use, and is updated (if necessary) by this function. If add_nos is True,
-    this will also yield an inverse switch for all boolean options. For
+    this will also add an inverse switch for all boolean options. For
     instance, for the boolean parameter "verbose", this will create --verbose
     and --no-verbose.
     '''
+
+    # Impl note: This function is kept separate from make_parser because it's
+    # already very long and I wanted to separate out as much as possible into
+    # its own call scope, to prevent even the possibility of suble mutation
+    # bugs.
     if param.kind is param.POSITIONAL_ONLY:
         raise PositionalArgError(param)
     elif param.kind is param.VAR_KEYWORD:
@@ -159,17 +164,15 @@ def _make_arguments(param, used_char_args, add_nos):
     else:
         flags.append(name)
 
-    yield flags, arg_spec
+    parser.add_argument(*flags, **arg_spec)
 
     # Create the --no- version for boolean switches
     if add_nos and arg_type is bool:
-        flags = ['--no-{}'.format(name)]
-        arg_spec = {
-            'action': 'store_const',
-            'dest': name,
-            'const': default if default is not _empty else False}
-
-        yield flags, arg_spec
+        parser.add_argument(
+            '--no-{}'.format(name),
+            action='store_const',
+            dest=name,
+            const=default if default is not _empty else False)
 
 
 def make_parser(func_sig, description, epilog, add_nos):
@@ -188,8 +191,7 @@ def make_parser(func_sig, description, epilog, add_nos):
         key=lambda param: len(param.name) > 1)
 
     for param in params:
-        for flags, spec in _make_arguments(param, used_char_args, add_nos):
-            parser.add_argument(*flags, **spec)
+        _add_arguments(param, parser, used_char_args, add_nos)
 
     return parser
 
