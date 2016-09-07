@@ -392,9 +392,9 @@ If the function is called with no arguments, ``sys.argv[1:]`` is used. This is t
 Exceptions and limitations
 --------------------------
 
-- There are a few possible exceptions that ``autocommand`` can raise. All of them derive from ``autocommand.AutocommandError``, which is a ``TypeError``.
+- There are a few possible exceptions that ``autocommand`` can raise. All of them derive from ``autocommand.AutocommandError``
 
-  - If an invalid annotation is given (that is, it isn't a ``type``, ``str``, ``(type, str)``, or ``(str, type)``, an ``AnnotationError`` is raised
+  - If an invalid annotation is given (that is, it isn't a ``type``, ``str``, ``(type, str)``, or ``(str, type)``, an ``AnnotationError`` is raised. The ``type`` may be any callable, as described in the `Types`_ section.
   - If the function has a ``**kwargs`` parameter, a ``KWargError`` is raised.
   - If, somehow, the function has a positional-only parameter, a ``PositionalArgError`` is raised. This means that the argument doesn't have a name, which is currently not possible with a plain ``def`` or ``lambda``, though many built-in functions have this kind of parameter.
 

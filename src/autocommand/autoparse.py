@@ -27,27 +27,29 @@ from autocommand.errors import AutocommandError
 _empty = Parameter.empty
 
 
-class AnnotationError(AutocommandError, TypeError):
+class AnnotationError(AutocommandError):
     '''Annotation error: annotation must be a string, type, or tuple of both'''
 
 
-class PositionalArgError(AutocommandError, TypeError):
+class PositionalArgError(AutocommandError):
     '''
     Postional Arg Error: autocommand can't handle postional-only parameters
     '''
 
 
-class KWArgError(AutocommandError, TypeError):
+class KWArgError(AutocommandError):
     '''kwarg Error: autocommand can't handle a **kwargs parameter'''
 
 
 def _get_type_description(annotation):
     '''
-    Given an annotation, return the (type, description) for the parameter
+    Given an annotation, return the (type, description) for the parameter.
+    If you provide an annotation that is somehow both a string and a callable,
+    the behavior is undefined.
     '''
     if annotation is _empty:
         return None, None
-    elif isinstance(annotation, type):
+    elif callable(annotation):
         return annotation, None
     elif isinstance(annotation, str):
         return None, annotation
@@ -57,9 +59,9 @@ def _get_type_description(annotation):
         except ValueError as e:
             raise AnnotationError(annotation) from e
         else:
-            if isinstance(arg1, type) and isinstance(arg2, str):
+            if callable(arg1) and isinstance(arg2, str):
                 return arg1, arg2
-            elif isinstance(arg1, str) and isinstance(arg2, type):
+            elif isinstance(arg1, str) and callable(arg2):
                 return arg2, arg1
 
     raise AnnotationError(annotation)
