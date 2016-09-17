@@ -27,12 +27,15 @@ autocommand_module = sys.modules['autocommand.autocommand']
 def _asyncio_unavailable():
     try:
         import asyncio
+
+        # This is here to silence flake8 complaining about "unused import"
+        assert asyncio
     except ImportError:
         return True
     else:
         return False
 
-uses_async = pytest.mark.skipif(
+skip_if_async_unavailable = pytest.mark.skipif(
     _asyncio_unavailable(),
     reason="async tests require asyncio (python3.4+)")
 
@@ -102,7 +105,7 @@ def test_autocommand_no_async(
     'input_loop, output_loop',
     [(sentinel.loop, sentinel.loop),
      (True, None)])
-@uses_async
+@skip_if_async_unavailable
 def test_autocommand_with_async(
         patched_automain,
         patched_autoasync,

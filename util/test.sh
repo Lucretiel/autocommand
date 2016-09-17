@@ -2,7 +2,7 @@
 
 set -ex
 
-pep8 --show-source src test
+flake8 --show-source src test
 
 py.test \
     --cov autocommand \
