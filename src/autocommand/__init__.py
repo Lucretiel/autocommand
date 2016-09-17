@@ -15,11 +15,13 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
-from .automain import automain
-from .autoparse import autoparse, smart_open
-from .autocommand import autocommand
+# flake8 flags all these imports as unused, hence the NOQAs everywhere.
+
+from .automain import automain  # NOQA
+from .autoparse import autoparse, smart_open  # NOQA
+from .autocommand import autocommand  # NOQA
 
 try:
-    from .autoasync import autoasync
+    from .autoasync import autoasync  # NOQA
 except ImportError:  # pragma: no cover
     pass
