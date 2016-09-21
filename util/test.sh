@@ -2,7 +2,7 @@
 
 set -ex
 
-flake8 --show-source src test
+python3 -m flake8 --show-source src test
 
 py.test \
     --cov autocommand \
