@@ -128,6 +128,34 @@ def test_pass_loop(context_loop):
     assert async_main() is asyncio.get_event_loop()
 
 
+def test_pass_loop_prior_argument(context_loop):
+    '''
+    Test that, if loop is the first positional argument, other arguments are
+    still passed correctly
+    '''
+    @autoasync(pass_loop=True)
+    @asyncio.coroutine
+    def async_main(loop, argument):
+        yield
+        return loop, argument
+
+    loop, value = async_main(10)
+    assert loop is asyncio.get_event_loop()
+    assert value == 10
+
+
+def test_pass_loop_kwarg_only(context_loop):
+    @autoasync(pass_loop=True)
+    @asyncio.coroutine
+    def async_main(*, loop, argument):
+        yield
+        return loop, argument
+
+    loop, value = async_main(argument=10)
+    assert loop is asyncio.get_event_loop()
+    assert value == 10
+
+
 def test_run_forever(context_loop):
     @asyncio.coroutine
     def stop_loop_after(t):

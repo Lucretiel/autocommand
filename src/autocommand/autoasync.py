@@ -76,8 +76,14 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
         # installed after the autoasync decorator, it is respected at call time
         local_loop = get_event_loop() if loop is None else loop
 
+        # Inject the 'loop' argument. We have to use this signature binding to
+        # ensure it's injected in the correct place (positional, keyword, etc)
         if pass_loop:
-            kwargs['loop'] = local_loop
+            bound_args = old_sig.bind_partial()
+            bound_args.arguments.update(
+                loop=local_loop,
+                **new_sig.bind(*args, **kwargs).arguments)
+            args, kwargs = bound_args.args, bound_args.kwargs
 
         if forever:
             # Explicitly don't create a reference to the created task. This
@@ -91,8 +97,10 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
     # Attach an updated signature, with the "loop" parameter filted out. This
     # allows 'pass_loop' to be used with autoparse
     if pass_loop:
-        sig = signature(coro)
-        autoasync_wrapper.__signature__ = sig.replace(parameters=(
-            param for name, param in sig.parameters.items() if name != "loop"))
+        old_sig = signature(coro)
+        new_sig = old_sig.replace(parameters=(
+            param for name, param in old_sig.parameters.items()
+            if name != "loop"))
+        autoasync_wrapper.__signature__ = new_sig
 
     return autoasync_wrapper
