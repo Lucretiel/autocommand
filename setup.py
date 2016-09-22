@@ -7,7 +7,7 @@ def getfile(filename):
 
 setup(
     name='autocommand',
-    version='2.1.3',
+    version='2.1.4',
     packages=[
         'autocommand'
     ],
