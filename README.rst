@@ -30,7 +30,7 @@ Autocommand turns a function into a command-line program. It converts the functi
 
     # This program takes exactly one argument and echos it.
     @autocommand(__name__)
-    def echo(thing)
+    def echo(thing):
         print(thing)
 
 ::
@@ -174,7 +174,7 @@ Autocommand also supports the creation of switch inverters. Pass ``add_nos=True`
 .. code:: python
 
     @autocommand(__name__, add_nos=True)
-    def example(verbos=False):
+    def example(verbose=False):
         pass
 
 ::
