@@ -15,9 +15,40 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
-from asyncio import get_event_loop
+from asyncio import get_event_loop, iscoroutine
 from functools import wraps
 from inspect import signature
+
+
+def _launch_forever_coro(coro, args, kwargs, loop):
+    '''
+    This helper function launches an async main function that was tagged with
+    forever=True. There are two possibilities:
+
+    - The function is a normal function, which handles initializing the event
+      loop, which is then run forever
+    - The function is a coroutine, which needs to be scheduled in the event
+      loop, which is then run forever
+      - There is also the possibility that the function is a normal function
+        wrapping a coroutine function
+
+    The function is therefore called unconditionally and scheduled in the event
+    loop if the return value is a coroutine object.
+
+    The reason this is a separate function is to make absolutely sure that all
+    the objects created are garbage collected after all is said and done; we
+    do this to ensure that any exceptions raised in the tasks are collected
+    ASAP.
+    '''
+
+    # Personal note: I consider this an antipattern, as it relies on the use of
+    # unowned resources. The setup function dumps some stuff into the event
+    # loop where it just whirls in the ether without a well defined owner or
+    # lifetime. For this reason, there's a good chance I'll remove the
+    # forever=True feature from autoasync at some point in the future.
+    thing = coro(*args, **kwargs)
+    if iscoroutine(thing):
+        loop.create_task(thing)
 
 
 def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
@@ -70,6 +101,16 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
             forever=forever,
             pass_loop=pass_loop)
 
+    # The old and new signatures are required to correctly bind the loop
+    # parameter in 100% of cases, even if it's a positional parameter.
+    # NOTE: A future release will probably require the loop parameter to be
+    # a kwonly parameter.
+    if pass_loop:
+        old_sig = signature(coro)
+        new_sig = old_sig.replace(parameters=(
+            param for name, param in old_sig.parameters.items()
+            if name != "loop"))
+
     @wraps(coro)
     def autoasync_wrapper(*args, **kwargs):
         # Defer the call to get_event_loop so that, if a custom policy is
@@ -86,21 +127,14 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
             args, kwargs = bound_args.args, bound_args.kwargs
 
         if forever:
-            # Explicitly don't create a reference to the created task. This
-            # ensures that if an exception is raised, it is shown as soon as
-            # possible, when the created task is garbage collected.
-            local_loop.create_task(coro(*args, **kwargs))
+            _launch_forever_coro(coro, args, kwargs, local_loop)
             local_loop.run_forever()
         else:
             return local_loop.run_until_complete(coro(*args, **kwargs))
 
-    # Attach an updated signature, with the "loop" parameter filted out. This
-    # allows 'pass_loop' to be used with autoparse
+    # Attach the updated signature. This allows 'pass_loop' to be used with
+    # autoparse
     if pass_loop:
-        old_sig = signature(coro)
-        new_sig = old_sig.replace(parameters=(
-            param for name, param in old_sig.parameters.items()
-            if name != "loop"))
         autoasync_wrapper.__signature__ = new_sig
 
     return autoasync_wrapper

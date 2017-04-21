@@ -181,6 +181,29 @@ def test_run_forever(context_loop):
     assert retrieved_value
 
 
+def test_run_forever_func(context_loop):
+    @asyncio.coroutine
+    def stop_loop_after(t):
+        yield from asyncio.sleep(t)
+        context_loop.stop()
+
+    retrieved_value = False
+
+    @asyncio.coroutine
+    def set_value_after(t):
+        nonlocal retrieved_value
+        yield from asyncio.sleep(t)
+        retrieved_value = True
+
+    @autoasync(forever=True)
+    def main_func():
+        asyncio.async(set_value_after(0.1))
+        asyncio.async(stop_loop_after(0.2))
+
+    main_func()
+    assert retrieved_value
+
+
 def test_defered_loop(context_loop, new_loop):
     '''
     Test that, if a new event loop is installed with set_event_loop AFTER the

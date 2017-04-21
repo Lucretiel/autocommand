@@ -35,6 +35,7 @@ def _asyncio_unavailable():
     else:
         return False
 
+
 skip_if_async_unavailable = pytest.mark.skipif(
     _asyncio_unavailable(),
     reason="async tests require asyncio (python3.4+)")
