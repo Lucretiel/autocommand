@@ -217,14 +217,16 @@ If the default value is a file object, such as ``sys.stdout``, then autocommand 
 Descriptions and docstrings
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``autocommand`` decorator accepts ``description`` and ``epilog`` kwargs, corresponding to the `description <https://docs.python.org/3/library/argparse.html#description>`_ and `epilog <https://docs.python.org/3/library/argparse.html#epilog>`_ of the ``ArgumentParser``. If no description is given, but the decorated function has a docstring, then it is taken as the ``description`` for the ``ArgumentParser``
+The ``autocommand`` decorator accepts ``description`` and ``epilog`` kwargs, corresponding to the `description <https://docs.python.org/3/library/argparse.html#description>`_ and `epilog <https://docs.python.org/3/library/argparse.html#epilog>`_ of the ``ArgumentParser``. If no description is given, but the decorated function has a docstring, then it is taken as the ``description`` for the ``ArgumentParser``. You can also provide both the description and epilog in the docstring by splitting it into two sections with 4 or more - characters.
 
 .. code:: python
 
-    @autocommand(__name__, epilog='Some extra documentation in the epilog')
+    @autocommand(__name__)
     def copy(infile=sys.stdin, outfile=sys.stdout):
         '''
         Copy an the contents of a file (or stdin) to another file (or stdout)
+        ----------
+        Some extra documentation in the epilog
         '''
         with smart_open(infile) as istr:
             with smart_open(outfile, 'w') as ostr:
