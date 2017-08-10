@@ -1,7 +1,7 @@
 from unittest.mock import patch
 from argparse import ArgumentParser
 import pytest
-from autocommand.autoparse import autoparse
+from autocommand.autoparse import autoparse, TooManySplitsError
 
 
 def test_basic_invocation():
@@ -54,6 +54,41 @@ def test_docstring_description(check_help_text):
     check_help_text(
         lambda: func(['-h']),
         'This is a docstring description')
+
+
+def test_docstring_description_epilog(check_help_text):
+    @autoparse
+    def func(arg):
+        '''
+        This is the description
+        -------
+        This is the epilog
+        '''
+        pass
+
+    created_parser = func.parser
+    assert 'This is the description' in created_parser.description
+    assert 'This is the epilog' in created_parser.epilog
+
+    check_help_text(
+        lambda: func(['-h']),
+        'This is the description',
+        'This is the epilog',
+        reject='-------')
+
+
+def test_bad_docstring():
+    with pytest.raises(TooManySplitsError):
+        @autoparse
+        def func(arg):
+            '''
+            Part 1
+            -------
+            Part 2
+            -------
+            Part 3
+            '''
+            pass
 
 
 def test_custom_parser():
