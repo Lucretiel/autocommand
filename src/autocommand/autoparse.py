@@ -16,6 +16,7 @@
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+from re import compile as compile_regex
 from inspect import signature, getdoc, Parameter
 from argparse import ArgumentParser
 from contextlib import contextmanager
@@ -39,6 +40,18 @@ class PositionalArgError(AutocommandError):
 
 class KWArgError(AutocommandError):
     '''kwarg Error: autocommand can't handle a **kwargs parameter'''
+
+
+class DocstringError(AutocommandError):
+    '''Docstring error'''
+
+
+class TooManySplitsError(DocstringError):
+    '''
+    The docstring had too many ---- section splits. Currently we only support
+    using up to a single split, to split the docstring into description and
+    epilog parts.
+    '''
 
 
 def _get_type_description(annotation):
@@ -196,6 +209,26 @@ def make_parser(func_sig, description, epilog, add_nos):
     return parser
 
 
+_DOCSTRING_SPLIT = compile_regex(r'\n\s*-{4,}\s*\n')
+
+
+def parse_docstring(docstring):
+    '''
+    Given a docstring, parse it into a description and epilog part
+    '''
+    if docstring is None:
+        return '', ''
+
+    parts = _DOCSTRING_SPLIT.split(docstring)
+
+    if len(parts) == 1:
+        return docstring, ''
+    elif len(parts) == 2:
+        return parts[0], parts[1]
+    else:
+        raise TooManySplitsError()
+
+
 def autoparse(
         func=None, *,
         description=None,
@@ -245,11 +278,13 @@ def autoparse(
 
     func_sig = signature(func)
 
+    docstr_description, docstr_epilog = parse_docstring(getdoc(func))
+
     if parser is None:
         parser = make_parser(
             func_sig,
-            description or getdoc(func),
-            epilog,
+            description or docstr_description,
+            epilog or docstr_epilog,
             add_nos)
 
     @wraps(func)

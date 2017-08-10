@@ -39,7 +39,7 @@ def check_parse():
 
 @pytest.fixture
 def check_help_text(capsys):
-    def check_help_text_impl(func, *texts):
+    def check_help_text_impl(func, *texts, reject=()):
         '''
         This helper checks that some set of text is written to stdout or stderr
         after the called function raises a SystemExit. It is used to test that
@@ -54,6 +54,9 @@ def check_help_text(capsys):
         *texts: A set of strings to test for. All of the provided strings will
           be checked for in the captured stdout/stderr using a standard
           substring search.
+        reject: A string or set of strings to check do NOT exist anywhere in
+          the output. Currently used as a cludge to test the docstring split
+          behavior.
         '''
         with pytest.raises(SystemExit):
             func()
@@ -61,7 +64,14 @@ def check_help_text(capsys):
         out, err = capsys.readouterr()
 
         # TODO: be wary of argparse's text formatting
+        # TODO: test that the text appears in the order given
         for text in texts:
             assert text in out or text in err
+
+        if isinstance(reject, str):
+            reject = [reject]
+
+        for text in reject:
+            assert text not in out and text not in err
 
     return check_help_text_impl
