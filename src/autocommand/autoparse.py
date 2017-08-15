@@ -327,7 +327,7 @@ def smart_open(filename_or_file, *args, **kwargs):
                 # If it was a filename, f is closed at the end here.
     '''
     if isinstance(filename_or_file, (str, bytes, int)):
-        with open(filename_or_file) as file:
+        with open(filename_or_file, *args, **kwargs) as file:
             yield file
     else:
         yield filename_or_file

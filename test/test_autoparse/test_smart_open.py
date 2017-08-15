@@ -7,12 +7,35 @@ def test_smart_open_is_exported():
     assert autocommand.smart_open is smart_open
 
 
-def test_smart_open_path(tmpdir):
-    path = str(tmpdir.join('file.txt').ensure(file=True))
+def test_smart_open_path_read(tmpdir):
+    target = tmpdir.join('file.txt')
+    target.write("Hello")
 
-    with smart_open(path, 'w') as file:
+    with smart_open(str(target)) as file:
         assert not file.closed
+        assert file.read() == "Hello"
+
     assert file.closed
+
+
+def test_smart_open_path_write(tmpdir):
+    target = tmpdir.join('file.txt').ensure(file=True)
+
+    with smart_open(str(target), 'w') as file:
+        assert not file.closed
+        file.write("Test Content")  # Tests that the file is writable
+
+    assert file.closed
+    assert target.read() == "Test Content"
+
+
+def test_smart_open_path_create(tmpdir):
+    target = tmpdir.join("file.txt")
+
+    with smart_open(str(target), 'w') as file:
+        file.write("Test Content")
+
+    assert target.read() == "Test Content"
 
 
 def test_smart_open_file(tmpdir):
