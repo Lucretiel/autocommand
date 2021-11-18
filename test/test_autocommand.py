@@ -41,7 +41,7 @@ skip_if_async_unavailable = pytest.mark.skipif(
     reason="async tests require asyncio (python3.4+)")
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patched_autoparse():
     with patch.object(
             autocommand_module,
@@ -50,7 +50,7 @@ def patched_autoparse():
         yield autoparse
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patched_autoasync():
     with patch.object(
             autocommand_module,
@@ -62,7 +62,7 @@ def patched_autoasync():
         yield autoasync
 
 
-@pytest.yield_fixture
+@pytest.fixture
 def patched_automain():
     with patch.object(
             autocommand_module,
