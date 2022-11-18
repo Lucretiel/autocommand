@@ -66,3 +66,10 @@ def test_args_and_kwargs():
             assert b == 2
 
     assert main_called
+
+
+def test_keyboard_interrupt_ignored():
+    with pytest.raises(KeyboardInterrupt):
+        @automain(True)
+        def main():
+            raise KeyboardInterrupt()
