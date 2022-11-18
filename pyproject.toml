@@ -1,0 +1,24 @@
+[project]
+name = "autocommand"
+version = "2.2.2"
+authors = [
+  { name="Nathan West" },
+]
+description = "A library to create a command-line program from a function"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Lucretiel/autocommand"
+"Bug Tracker" = "https://github.com/Lucretiel/autocommand/issues"
