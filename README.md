@@ -1,4 +1,5 @@
 [![PyPI version](https://badge.fury.io/py/autocommand.svg)](https://badge.fury.io/py/autocommand)
+![GitHub branch checks state](https://img.shields.io/github/checks-status/Lucretiel/autocommand/master?logo=pytest)
 
 # autocommand
 
