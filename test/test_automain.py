@@ -73,3 +73,26 @@ def test_keyboard_interrupt_ignored():
         @automain(True)
         def main():
             raise KeyboardInterrupt()
+
+
+def test_keyboard_interrupt_ignored_explicit():
+    with pytest.raises(KeyboardInterrupt):
+        @automain(True, on_interrupt='ignore')
+        def main():
+            raise KeyboardInterrupt()
+
+
+def test_keyboard_interrupt_quiet():
+    with pytest.raises(SystemExit) as ctx:
+        @automain(True, on_interrupt='quiet')
+        def main():
+            raise KeyboardInterrupt()
+    assert ctx.value.code == 1
+
+
+def test_keyboard_interrupt_suppress():
+    with pytest.raises(SystemExit) as ctx:
+        @automain(True, on_interrupt='suppress')
+        def main():
+            raise KeyboardInterrupt()
+    assert ctx.value.code == 0
