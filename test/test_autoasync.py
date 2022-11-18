@@ -20,6 +20,7 @@ from contextlib import closing, contextmanager
 asyncio = pytest.importorskip('asyncio')
 autoasync = pytest.importorskip('autocommand.autoasync').autoasync
 
+
 class YieldOnce:
     def __await__(self):
         yield
@@ -184,7 +185,7 @@ def test_run_forever_func(context_loop):
 
     async def set_value_after(t):
         nonlocal retrieved_value
-        await  asyncio.sleep(t)
+        await asyncio.sleep(t)
         retrieved_value = True
 
     @autoasync(forever=True)

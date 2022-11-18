@@ -127,7 +127,9 @@ def autoasync(coro=None, *, loop=None, forever=False, pass_loop=False):
             args, kwargs = bound_args.args, bound_args.kwargs
 
         if forever:
-            local_loop.create_task(_run_forever_coro(coro, args, kwargs, local_loop))
+            local_loop.create_task(_run_forever_coro(
+                coro, args, kwargs, local_loop
+            ))
             local_loop.run_forever()
         else:
             return local_loop.run_until_complete(coro(*args, **kwargs))
