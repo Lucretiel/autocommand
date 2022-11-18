@@ -16,7 +16,7 @@
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
 from .autoparse import autoparse
-from .automain import automain
+from .automain import automain  # noqa: F401
 try:
     from .autoasync import autoasync
 except ImportError:  # pragma: no cover
@@ -31,7 +31,12 @@ def autocommand(
         parser=None,
         loop=None,
         forever=False,
-        pass_loop=False):
+        pass_loop=False,
+        automain=None,  # noqa: F811
+        ):
+
+    # bind late to allow for monkeypatching in tests
+    automain = automain or globals()['automain']
 
     if callable(module):
         raise TypeError('autocommand requires a module name argument')

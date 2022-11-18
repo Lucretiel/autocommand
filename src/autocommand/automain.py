@@ -16,6 +16,9 @@
 # along with autocommand.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+import contextlib
+import functools
+
 from .errors import AutocommandError
 
 
@@ -23,7 +26,19 @@ class AutomainRequiresModuleError(AutocommandError, TypeError):
     pass
 
 
-def automain(module, *, args=(), kwargs=None):
+class InterruptHandlers:
+    ignore = functools.partial(contextlib.suppress)
+    suppress = functools.partial(contextlib.suppress, KeyboardInterrupt)
+
+    @contextlib.contextmanager
+    def quiet():
+        with contextlib.suppress(KeyboardInterrupt):
+            yield
+            return
+        sys.exit(1)
+
+
+def automain(module, *, on_interrupt="ignore", args=(), kwargs=None):
     '''
     This decorator automatically invokes a function if the module is being run
     as the "__main__" module. Optionally, provide args or kwargs with which to
@@ -52,7 +67,10 @@ def automain(module, *, args=(), kwargs=None):
 
         # Use a function definition instead of a lambda for a neater traceback
         def automain_decorator(main):
-            sys.exit(main(*args, **kwargs))
+            res = 0
+            with getattr(InterruptHandlers, on_interrupt)():
+                res = main(*args, **kwargs)
+            sys.exit(res)
 
         return automain_decorator
     else:
