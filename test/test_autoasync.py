@@ -99,6 +99,8 @@ def test_basic_autoasync(context_loop):
     assert data == {1, 2, 3, 4}
 
 
+@pytest.mark.filterwarnings(
+    "ignore:coroutine 'test_custom_loop.<locals>.bad_coro' was never awaited")
 def test_custom_loop(context_loop, new_loop):
     did_bad_coro_run = False
 
@@ -107,8 +109,6 @@ def test_custom_loop(context_loop, new_loop):
         did_bad_coro_run = True
         await YieldOnce()
 
-    # TODO: this fires a "task wasn't awaited" warning; figure out how to
-    # supress
     context_loop.create_task(bad_coro())
 
     @autoasync(loop=new_loop)
