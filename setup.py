@@ -17,7 +17,7 @@ setup(
     author='Nathan West',
     url='https://github.com/Lucretiel/autocommand',
     description='A library to create a command-line program from a function',
-    long_description=getfile('README.rst'),
+    long_description=getfile('README.md'),
     classifiers=[
         'Development Status :: 6 - Mature',
         'Intended Audience :: Developers',
